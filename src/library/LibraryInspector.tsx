@@ -25,7 +25,6 @@ interface LibraryInspectorProps {
     isCollectionView?: boolean;
     accent: string;
     description: string | null;
-    hltbMainHours: number | null;
     preferLogos?: boolean;
     onPlay: () => void;
     onDetails: (sourceEl?: HTMLElement) => void;
@@ -433,7 +432,6 @@ export function LibraryInspector({
     isCollectionView = false,
     accent,
     description,
-    hltbMainHours,
     onPlay,
     onDetails,
     onOpenCollection,
@@ -484,12 +482,11 @@ export function LibraryInspector({
                 playedMinutes: game.playedMinutes,
                 achievements: game.achievements,
                 lastPlayed: game.lastPlayed ?? 0,
-                hltbMainHours,
             },
             Date.now(),
             locale
         );
-    }, [game.isSoundtrack, game.playedMinutes, game.achievements, game.lastPlayed, hltbMainHours, locale]);
+    }, [game.isSoundtrack, game.playedMinutes, game.achievements, game.lastPlayed, locale]);
 
     const playLabel = game.running
         ? (game.isSoundtrack ? 'Playing' : 'Resume')

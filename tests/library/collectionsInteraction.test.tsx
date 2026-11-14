@@ -104,7 +104,6 @@ describe('Collections Interaction & Browsing Tests', () => {
                     isCollectionView={true}
                     accent="#1a9fff"
                     description={null}
-                    hltbMainHours={null}
                     onPlay={() => {}}
                     onDetails={() => {}}
                     onOpenCollection={() => {}}
@@ -121,7 +120,6 @@ describe('Collections Interaction & Browsing Tests', () => {
                     isCollectionView={true}
                     accent="#1a9fff"
                     description={null}
-                    hltbMainHours={null}
                     onPlay={() => {}}
                     onDetails={() => {}}
                     onOpenCollection={() => {}}
@@ -138,7 +136,6 @@ describe('Collections Interaction & Browsing Tests', () => {
                     isCollectionView={true}
                     accent="#1a9fff"
                     description={null}
-                    hltbMainHours={null}
                     onPlay={() => {}}
                     onDetails={() => {}}
                     onOpenCollection={() => {}}
@@ -185,7 +182,6 @@ describe('Collections Interaction & Browsing Tests', () => {
                         isCollectionView={true}
                         accent="#1a9fff"
                         description={null}
-                        hltbMainHours={null}
                         onPlay={() => {}}
                         onDetails={() => {}}
                         onOpenCollection={() => {}}

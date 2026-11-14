@@ -11,9 +11,6 @@ importers:
       '@decky/api':
         specifier: ^1.1.3
         version: 1.1.3
-      fast-levenshtein:
-        specifier: ^3.0.0
-        version: 3.0.0
       react-icons:
         specifier: ^5.3.0
         version: 5.7.0(react@19.1.1)
@@ -27,9 +24,6 @@ importers:
       '@decky/ui':
         specifier: ^4.12.1
         version: 4.12.1
-      '@types/fast-levenshtein':
-        specifier: ^0.0.2
-        version: 0.0.2
       '@types/react':
         specifier: 19.1.1
         version: 19.1.1
@@ -390,9 +384,6 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/fast-levenshtein@0.0.2':
-    resolution: {integrity: sha512-h9AGeNlFimLtFUlEZgk+hb3LUT4tNHu8y0jzCUeTdi1BM4e86sBQs/nQYgHk70ksNyNbuLwpymFAXkb0GAehmw==}
-
   '@types/react-dom@19.1.1':
     resolution: {integrity: sha512-jFf/woGTVTjUJsl2O7hcopJ1r0upqoq/vIOoCj0yLh3RIXxWcljlpuZ+vEBRXsymD1jhfeJrlyTy/S1UW+4y1w==}
     peerDependencies:
@@ -591,13 +582,6 @@ packages:
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
-
-  fast-levenshtein@3.0.0:
-    resolution: {integrity: sha512-hKKNajm46uNmTlhHSyZkmToAc56uZJwYq7yrciZjqOxnlfQwERDQJmHPUp7m1m9wx8vgOe8IaCKZ5Kv2k1DdCQ==}
-
-  fastest-levenshtein@1.0.16:
-    resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
-    engines: {node: '>= 4.9.1'}
 
   fastq@1.20.3:
     resolution: {integrity: sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==}
@@ -1375,8 +1359,6 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/fast-levenshtein@0.0.2': {}
-
   '@types/react-dom@19.1.1(@types/react@19.1.1)':
     dependencies:
       '@types/react': 19.1.1
@@ -1556,12 +1538,6 @@ snapshots:
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.8
-
-  fast-levenshtein@3.0.0:
-    dependencies:
-      fastest-levenshtein: 1.0.16
-
-  fastest-levenshtein@1.0.16: {}
 
   fastq@1.20.3:
     dependencies:

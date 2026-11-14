@@ -252,7 +252,7 @@ export function SettingsPanel() {
                         <PanelSectionRow>
                             <ButtonItem
                                 layout="below"
-                                description="Clears all cached HowLongToBeat times, descriptions, accent colors, and reloads artwork."
+                                description="Clears all cached descriptions, accent colors, and reloads artwork."
                                 onClick={async () => {
                                     await cache.clear();
                                     reloadArtworkCache();

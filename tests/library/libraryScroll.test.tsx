@@ -264,7 +264,6 @@ describe('Library Scroll & Touch Navigation', () => {
                     game={dummyGame}
                     accent="#ff6600"
                     description="Dig, fight, explore, build"
-                    hltbMainHours={50}
                     onPlay={() => {}}
                     onDetails={() => {}}
                 />

@@ -14,7 +14,6 @@ export interface GameChipInput {
     achievements: { achieved: number; total: number } | null;
     /** Unix seconds; shown in the eyebrow under the title ("Last played · Today"), no longer as a chip. */
     lastPlayed: number;
-    hltbMainHours: number | null;
     /** Set for a game new to the library (never played): when it was added. Replaces Played and Last played. */
     addedAt?: number;
     /** A Steam game not installed: its installed flag, and the space Steam says it needs (the chip right of Played). */
@@ -38,16 +37,6 @@ export function gameChips(i: GameChipInput, now: number, locale: string): Chip[]
             value: formatAchievements({ achieved, total }),
             progress: Math.min(1, Math.max(0, achieved / total)),
         });
-    }
-    if (i.hltbMainHours !== null && i.hltbMainHours > 0) {
-        chips.push({
-            key: 'hltb',
-            label: 'HLTB main',
-            value: formatHours(i.hltbMainHours, locale),
-            progress: Math.min(1, playedHours / i.hltbMainHours),
-        });
-    } else {
-        chips.push({ key: 'hltb', label: 'HLTB main', value: '—' });
     }
     return chips;
 }

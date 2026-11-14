@@ -1,4 +1,3 @@
-import { HltbResult } from '../src/data/hltb';
 import { GameInfo } from '../src/data/steam';
 
 export interface MockGame {
@@ -7,7 +6,6 @@ export interface MockGame {
     logoUrl?: string;
     source: string;
     description: string;
-    hltb: HltbResult;
     accent: string;
 }
 
@@ -39,11 +37,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'As war rages on throughout the Northern Realms, you take on the greatest contract of your life — tracking down the Child of Prophecy, a living weapon that can alter the shape of the world.',
-        hltb: {
-            status: 'found',
-            gameId: 10270,
-            times: { main: 51.5, mainExtras: 103, completionist: 173 },
-        },
         accent: '#e65c5c',
     },
     {
@@ -60,11 +53,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'Cyberpunk 2077 is an open-world, action-adventure RPG set in the megalopolis of Night City, where you play as a cyberpunk mercenary wrapped up in a do-or-die fight for survival.',
-        hltb: {
-            status: 'found',
-            gameId: 2127,
-            times: { main: 25, mainExtras: 60, completionist: 104 },
-        },
         accent: '#fcee09',
     },
     {
@@ -81,11 +69,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'GOG',
         description:
             'Take up your sword, channel your magic or board your Mech. Chained Echoes is a 16-bit style RPG set in a fantasy world where dragons are as common as piloted mechanical suits.',
-        hltb: {
-            status: 'found',
-            gameId: 81216,
-            times: { main: 30, mainExtras: 40, completionist: 55 },
-        },
         accent: '#4895ef',
     },
     {
@@ -102,11 +85,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Epic',
         description:
             'Defy the god of the dead as you hack and slash out of the Underworld in this rogue-like dungeon crawler from the creators of Bastion and Transistor.',
-        hltb: {
-            status: 'found',
-            gameId: 62719,
-            times: { main: 22.5, mainExtras: 47, completionist: 94 },
-        },
         accent: '#f72585',
     },
     {
@@ -123,11 +101,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'Bethesda Game Studios, the award-winning creators of Fallout 3 and Skyrim, welcome you to the world of Fallout 4 — their most ambitious game ever, and the next generation of open-world gaming.',
-        hltb: {
-            status: 'found',
-            gameId: 26727,
-            times: { main: 27, mainExtras: 81, completionist: 161 },
-        },
         accent: '#3498db',
     },
     {
@@ -144,11 +117,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'You\'ve inherited your grandfather\'s old farm plot in Stardew Valley. Armed with hand-me-down tools and a few coins, you set out to begin your new life.',
-        hltb: {
-            status: 'found',
-            gameId: 34712,
-            times: { main: 53, mainExtras: 94, completionist: 151 },
-        },
         accent: '#e67e22',
     },
     {
@@ -165,11 +133,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between.',
-        hltb: {
-            status: 'found',
-            gameId: 68151,
-            times: { main: 58.5, mainExtras: 101, completionist: 134 },
-        },
         accent: '#c5a059',
     },
     {
@@ -186,11 +149,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'Gather your party and return to the Forgotten Realms in a tale of fellowship and betrayal, sacrifice and survival, and the lure of absolute power.',
-        hltb: {
-            status: 'found',
-            gameId: 68033,
-            times: { main: 67, mainExtras: 108, completionist: 156 },
-        },
         accent: '#a83232',
     },
     {
@@ -207,11 +165,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'Forge your own path in Hollow Knight! An epic action adventure through a vast ruined kingdom of insects and heroes. Explore twisting caverns, battle tainted creatures and befriend bizarre bugs.',
-        hltb: {
-            status: 'found',
-            gameId: 26286,
-            times: { main: 27, mainExtras: 41, completionist: 63 },
-        },
         accent: '#7f8c8d',
     },
     {
@@ -228,11 +181,6 @@ export const MOCK_GAMES: MockGame[] = [
         source: 'Steam',
         description:
             'Winner of over 175 Game of the Year Awards and recipient of over 250 perfect scores, RDR2 is the epic tale of outlaw Arthur Morgan and the infamous Van der Linde gang, on the run across America at the dawn of the modern age.',
-        hltb: {
-            status: 'found',
-            gameId: 27100,
-            times: { main: 50.5, mainExtras: 82, completionist: 181 },
-        },
         accent: '#c0392b',
     },
 ];

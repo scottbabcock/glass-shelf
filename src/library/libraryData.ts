@@ -1,4 +1,3 @@
-import { SHORTCUT_APP_TYPE } from '../data/installedGames';
 import { readGameInfo } from '../data/steam';
 import { HeroicRef, heroicStoreLabel } from '../logic/heroic';
 import { applyTabMasterCategories, TabMasterSettingsResult } from './tabmaster';
@@ -99,6 +98,7 @@ export const TOOL_APP_TYPE = 4;
 export const DEMO_APP_TYPE = 8;
 export const MUSIC_APP_TYPE = 8192;
 export const BETA_APP_TYPE = 65536;
+export const SHORTCUT_APP_TYPE = 1073741824;
 
 export function isToolOrServerName(rawName: string): boolean {
     const name = rawName.toLowerCase().trim();
