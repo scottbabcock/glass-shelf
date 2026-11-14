@@ -1,0 +1,566 @@
+import { SETTLE_WIDEN_MS } from '../../src/home/fastCycle';
+import { describe, expect, it } from 'vitest';
+import {
+    statusCss, HOME_GLASS, HOME_PILL,
+    FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
+} from '../../src/home/homeCss';
+import { sourcePillLook } from '../../src/styles/sourcePill';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pillFocusScale, STEAM_TOP_GRADIENT } from '../../src/home/pageStyle';
+import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, RETURN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
+import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
+
+/** Selector lists of every style rule, @-rule preludes (keyframes, @property) excluded. */
+function selectors(css: string): string[] {
+    const out: string[] = [];
+    const flat = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Keyframe bodies hold `from`/`to`/percent selectors; drop them before scanning.
+    const noKeyframes = flat.replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+    const re = /([^{}]+)\{[^{}]*\}/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(noKeyframes)) !== null) {
+        const prelude = m[1].trim();
+        if (prelude.startsWith('@')) continue;
+        out.push(...prelude.split(',').map((s) => s.trim()).filter(Boolean));
+    }
+    return out;
+}
+
+describe('homeCss', () => {
+    it('homeCss prefixes every class with gh-', () => {
+        const css = homeCss();
+        const list = selectors(css);
+        expect(list.length).toBeGreaterThan(10);
+        // (Hover looks sit under mouse mode's mark on the document's root, ours too: mouseMode.MOUSE_ATTR.)
+        for (const sel of list) expect(sel.replace(/^(html\[data-gg-mouse\]|:where\(html:not\(\[data-gg-mouse\]\)\)) /, '').startsWith('.gh-'), sel).toBe(true);
+        const classes = css.match(/\.[a-zA-Z_][\w-]*/g) ?? [];
+        for (const cls of classes) expect(cls.startsWith('.gh-'), cls).toBe(true);
+    });
+    it('homeCss defines --glance-accent with the default and never transitions it on the root (whole-tree restyle per frame)', () => {
+        const css = homeCss();
+        expect(css).toMatch(/--glance-accent:\s*#5fd1ae/);
+        expect(css).not.toMatch(/transition:[^;}]*--glance-accent/);
+        expect(css).toMatch(/\.gh-root\s*\{[^}]*--glance-accent-text:\s*#5fd1ae/);
+        // Small accent text uses the legible variant; bars, fills and rings keep the true accent.
+        expect(css).toMatch(/\.gh-eyebrow\s*\{[^}]*color:\s*var\(--glance-accent-text\)/);
+        expect(css).not.toMatch(/(?<![-\w])color:\s*var\(--glance-accent\)/);
+        expect(css).toMatch(/\.gh-root\s*\{[^}]*transition:\s*none\s*!important/);
+        // The accent-coloured elements fade their own colour instead.
+        expect(css).toMatch(new RegExp(`\\.gh-btn\\s*\\{[^}]*background ${ACCENT_MS}ms`));
+        expect(css).toMatch(new RegExp(`\\.gh-chip-fill\\s*\\{[^}]*width ${ACCENT_MS}ms`));
+    });
+    describe('switch timings (motion.ts): short for L1/R1, the sheet and feed unchanged', () => {
+        it('pins the ranges', () => {
+            expect(HERO_FADE_MS).toBeGreaterThanOrEqual(200);
+            expect(HERO_FADE_MS).toBeLessThanOrEqual(320);
+            expect(SLIDE_MS).toBeGreaterThanOrEqual(180);
+            expect(SLIDE_MS).toBeLessThanOrEqual(260);
+            expect(ACCENT_MS).toBeGreaterThanOrEqual(200);
+            expect(ACCENT_MS).toBeLessThanOrEqual(320);
+            expect(CAP_ART_FADE_MS).toBeGreaterThanOrEqual(100);
+            expect(CAP_ART_FADE_MS).toBeLessThanOrEqual(200);
+            expect(CAP_STATE_MS).toBeLessThanOrEqual(SLIDE_MS);
+            expect(SHEET_MS).toBe(500);
+        });
+        it('the CSS uses them: hero fade, card slide with the snappy curve, wide-art fade; the sheet rises over 500 ms', () => {
+            const css = homeCss(CARD_SCALE_DOCKED);
+            expect(css).toMatch(new RegExp(`\\.gh-hero-layer\\s*\\{[^}]*gh-fade-in ${HERO_FADE_MS}ms`));
+            expect(css).toMatch(/\.gh-hero-layer\.gh-hero-settled\s*\{[^}]*animation:\s*none\s*!important[^}]*opacity:\s*1/);
+            expect(css).toMatch(new RegExp(`\\.gh-recents-track\\s*\\{[^}]*transform ${SLIDE_MS}ms cubic-bezier\\(\\.2,\\.9,\\.25,1\\)`));
+            expect(css).toMatch(new RegExp(`\\.gh-cap\\s*\\{[^}]*left ${SLIDE_MS}ms[^}]*width ${SLIDE_MS}ms`));
+            expect(css).not.toMatch(/\.gh-cap\s*\{[^}]*transition:[^}]*box-shadow/);
+            expect(css).toMatch(new RegExp(`\\.gh-cap-art\\s*\\{[^}]*gh-fade-in ${CAP_ART_FADE_MS}ms`));
+            expect(css).toMatch(/\.gh-page\s*\{[^}]*transform 500ms cubic-bezier\(\.2,\.8,\.2,1\)/);
+        });
+    });
+    it("homeCss reserves 52px top and 46px bottom for Steam's bars", () => {
+        const css = homeCss();
+        expect(css).toMatch(/--gh-top:\s*52px/);
+        expect(css).toMatch(/--gh-bottom:\s*46px/);
+        expect(css).toMatch(/\.gh-safe\s*\{[^}]*top:\s*var\(--gh-top\)\s*!important[^}]*bottom:\s*var\(--gh-bottom\)\s*!important/);
+    });
+    it('homeCss never hides the portrait under the wide art, so failed landscape urls still show the capsule', () => {
+        const css = homeCss();
+        // The wide layer covers the portrait when it loads (it is mounted after it); nothing may hide the portrait.
+        expect(css).not.toMatch(/gh-cap-cover\s*\{[^}]*opacity:\s*0\s*!important/);
+        expect(css).not.toMatch(/gh-cap-art-on/);
+        expect(css).toMatch(/\.gh-cap-art\s*\{[^}]*animation:\s*gh-fade-in \d+ms/);
+    });
+    it('the store pill sits at the right edge, centred on the action row, drawn like the game page\'s pill', () => {
+        const css = homeCss();
+        // Action row 379.4..433.4 -> centre 406.4; pill 32 tall -> top 390.4.
+        expect(sourcePillTop()).toBeCloseTo(390.4, 5);
+        const pill = css.match(/\.gh-source\s*\{[^}]*\}/)?.[0] ?? '';
+        expect(pill).toMatch(/right:\s*var\(--gh-pill,\s*56px\)\s*!important/);
+        expect(pill).toMatch(/top:\s*calc\(390\.4px - var\(--gh-top\)\)/);
+        expect(pill).toMatch(/border-radius:\s*999px/);
+        expect(pill).toMatch(/pointer-events:\s*none/);
+        // The same look as the game page: one definition.
+        for (const decl of sourcePillLook((n) => `${n}px`).split(';').map((d) => d.trim()).filter(Boolean)) expect(pill).toContain(`${decl} !important`);
+        expect(css).toMatch(/\.gh-source-icon\s*\{[^}]*width:\s*16px[^}]*margin-right:\s*8px/);
+        // The old icon-only chip badge is gone; the chip row keeps its fixed height.
+        expect(css).not.toMatch(/\.gh-source\s*\{[^}]*var\(--gh-r-card\)/);
+    });
+    it('the status bar sits in Steam\'s top strip, right-aligned with the store pill, in the same glass pill', () => {
+        const css = homeCss();
+        const bar = css.match(/\.gh-status\s*\{[^}]*\}/)?.[0] ?? '';
+        // Placed by StatusBar from the canvas scale (the dot over Steam's avatar), with the fixed place as the fallback.
+        expect(bar).toMatch(/right:\s*var\(--gh-status-right,\s*32px\)\s*!important/);
+        expect(bar).toMatch(/top:\s*calc\(var\(--gh-status-cy,\s*32px\) - 16px\)\s*!important/);
+        expect(bar).toMatch(/height:\s*32px/);
+        expect(bar).toMatch(/pointer-events:\s*none/);
+        expect(bar).toMatch(/transition:\s*opacity 150ms/);
+        expect(css).toMatch(/\.gh-status\.gh-status-away\s*\{[^}]*opacity:\s*0/);
+        const pill = css.match(/\.gh-status-pill\s*\{[^}]*\}/)?.[0] ?? '';
+        for (const decl of sourcePillLook((n) => `${n}px`).split(';').map((d) => d.trim()).filter(Boolean)) expect(pill).toContain(`${decl} !important`);
+        expect(css).toMatch(/\.gh-status-low\s*\{[^}]*color:\s*#ff8585/);
+        // The status dot: the Friends tab's green and blue, grey when invisible or offline.
+        expect(css).toMatch(/\.gh-status-dot\s*\{[^}]*width:\s*12px[^}]*border-radius:\s*50%/);
+        expect(css).toMatch(/\.gh-status-dot-online\s*\{[^}]*background:\s*#8cd61d/);
+        expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
+        expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
+    });
+    it('never marks transform or opacity !important: Chromium will not run an animation of an !important property on its compositor', () => {
+        // (compositeFailed 262144, kAffectsImportantProperty, probed on the Ally: the open transition's motion then ran on the
+        // main thread and repainted every frame, the GPU near its limit, and stalled and jumped to its end on the screen.)
+        const css = [homeCss(CARD_SCALE_HANDHELD), homeCss(CARD_SCALE_DOCKED)].join('\n');
+        expect(css).not.toMatch(/(?<![-\w])transform:[^;}]*!important/);
+        expect(css).not.toMatch(/(?<![-\w])opacity:[^;}]*!important/);
+        // The rest stays !important (Steam's own styles must not win), the transitions too.
+        expect(css).toMatch(/\.gh-recents-track \{[^}]*position: absolute !important[^}]*transition: transform [^;]*!important/);
+    });
+    it('focus looks follow DOM focus too: after a tap, a click or the wheel Steam drops its focus classes', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        // The selected card's ring and glow, with the row under DOM focus.
+        expect(css).toMatch(/\.gh-recents:focus \.gh-cap-sel, \.gh-recents:focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\)/);
+        // A button, the Play pill's growth, a feed card and a tab's line.
+        expect(css).toMatch(/\.gh-btn:focus\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\)/);
+        expect(css).toMatch(/\.gh-actions > \.gh-btn-play\.gh-btn:focus\s*\{[^}]*transform:\s*scale/);
+        expect(css).toMatch(/\.gh-card:focus\s*\{[^}]*translateY\(-4px\)/);
+        expect(css).toMatch(/\.gh-tab:focus \.gh-tab-line\s*\{[^}]*opacity:\s*1/);
+        // A hover never shows over a focused card.
+        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\):not\(:focus\)\s*\{/);
+    });
+    it('a mouse lights the card under it: a faint ring, weaker than the selection, never on the selected card', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        // Games row: a half-strength white ring, no accent glow, and a little brighter.
+        expect(css).toMatch(/\.gh-cap\.gh-cap-hover:not\(\.gh-cap-sel\):not\(\.gh-cap-lib-on\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*filter:\s*brightness\(1\.12\)/);
+        expect(css).not.toMatch(/\.gh-cap-hover[^{]*\{[^}]*glance-accent/);
+        // An uninstalled game loses some of its grey under the cursor (after the grey rule, so it wins).
+        const off = css.indexOf('.gh-cap-off:not(.gh-cap-sel)');
+        const offHover = css.search(/\.gh-cap-off\.gh-cap-hover:not\(\.gh-cap-sel\)\s*\{[^}]*grayscale\(\.5\)/);
+        expect(off).toBeGreaterThan(-1);
+        expect(offHover).toBeGreaterThan(off);
+        // Feed cards: the same ring and a 2px lift (a focused card lifts 4px).
+        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\):not\(:focus\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*transform:\s*translateY\(-2px\)/);
+    });
+    it('the recents row takes touch: pointer events on, its own gestures, off under the sheet and while opening', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        expect(css).toMatch(/\.gh-recents\s*\{[^}]*pointer-events:\s*auto\s*!important[^}]*touch-action:\s*none\s*!important[^}]*user-select:\s*none\s*!important/);
+        expect(css).toMatch(/\.gh-page-up \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        // The root's own pointer-events: none (while a game opens) doesn't reach a child that sets auto: the row is
+        // switched off explicitly, so a tap during the open transition does nothing.
+        expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        // While a finger drags the row the track follows it directly: no slide transition (useRowDrag).
+        expect(css).toMatch(/\.gh-recents-drag \.gh-recents-track\s*\{[^}]*transition:\s*none\s*!important/);
+        // The loop preview's ghosts take taps as part of the row (a ghost selects its game): they inherit the row's
+        // pointer-events, so they too take none under the sheet or while a game opens (an explicit auto would escape both).
+        expect(css).toMatch(/\.gh-ghost\s*\{[^}]*cursor:\s*default/);
+        expect(css).not.toMatch(/\.gh-ghost\s*\{[^}]*pointer-events/);
+        // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent
+        // glow (no y offset), and no bar along its bottom edge. Wide or narrow (a fast L1/R1 run), only the selected card
+        // (gh-cap-sel): in Steam's row style the wide card is the first game, selected or not, and gets no ring.
+        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel, \.gh-recents-focus \.gh-cap-lib-on, \.gh-recents:focus \.gh-cap-sel, \.gh-recents:focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
+        expect(css).not.toMatch(/gh-recents-focus[^{]*\.gh-cap-bar/);
+        expect(css).not.toMatch(/\.gh-cap-wide[,\s]*\{[^}]*(box-shadow|--gh-edge)/);
+        expect(css).not.toMatch(/\.gh-recents-focus \.gh-cap-wide/);
+        expect(css).toMatch(/\.gh-cap-sel\s*\{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
+        // When the run ends the card widens quickly (SETTLE_WIDEN_MS), its neighbours moving with it.
+        expect(css).toMatch(new RegExp(`\\.gh-recents-snap \\.gh-cap\\s*\\{[^}]*transition: left ${SETTLE_WIDEN_MS}ms cubic-bezier\\([^)]*\\), width ${SETTLE_WIDEN_MS}ms`));
+        // A game new to the library: a small light "New" pill at the card's top left.
+        expect(css).toMatch(/\.gh-cap-marks\s*\{[^}]*position:\s*absolute[^}]*flex-direction:\s*column/);
+        expect(css).toMatch(/\.gh-cap-wide \.gh-cap-marks\s*\{[^}]*flex-direction:\s*row/);
+        expect(css).toMatch(/\.gh-cap-new\s*\{[^}]*text-transform:\s*uppercase[^}]*background:\s*rgba\(255,255,255,\.92\)/);
+    });
+    it('homeCss gives ghosts no blur base and no recents-on-library variant', () => {
+        const css = homeCss();
+        expect(css).not.toMatch(/gh-recents-onlib/);
+        expect(css).not.toMatch(/\.gh-ghost[^{]*\.gh-cap-blur/);
+    });
+    it('homeCss sizes the recents row from the card scale: handheld x1.5 and docked x1.6', () => {
+        const hand = homeCss(1.5);
+        expect(hand).toMatch(/\.gh-recents\s*\{[^}]*top:\s*calc\(478px - var\(--gh-top\)\)\s*!important[^}]*height:\s*210px/);
+        expect(hand).toMatch(/\.gh-cap\s*\{[^}]*height:\s*210px\s*!important[^}]*border-radius:\s*12px/);
+        expect(hand).toMatch(/\.gh-cap-cover\s*\{[^}]*width:\s*140px/);
+        expect(hand).toMatch(/\.gh-cap\.gh-cap-focus\s*\{[^}]*box-shadow:\s*0 0 0 1px var\(--glance-accent\), 0 24px 60px -18px var\(--glance-accent\)/);
+        expect(hand).toMatch(/\.gh-ghost-icon\s*\{[^}]*width:\s*54px/);
+        const dock = homeCss(1.6);
+        expect(dock).toMatch(/\.gh-recents\s*\{[^}]*top:\s*calc\(464px - var\(--gh-top\)\)\s*!important[^}]*height:\s*224px/);
+        expect(dock).toMatch(/\.gh-cap\s*\{[^}]*height:\s*224px\s*!important[^}]*border-radius:\s*12\.8px/);
+        expect(dock).toMatch(/\.gh-cap-cover\s*\{[^}]*width:\s*149px/);
+        expect(dock).toMatch(/\.gh-cap\.gh-cap-focus\s*\{[^}]*box-shadow:\s*0 0 0 1px var\(--glance-accent\), 0 25\.6px 64px -19\.2px var\(--glance-accent\)/);
+        expect(dock).toMatch(/\.gh-cap-bar\s*\{[^}]*height:\s*4\.8px/);
+        expect(dock).toMatch(/\.gh-ghost-icon\s*\{[^}]*width:\s*57\.6px[^}]*font-size:\s*32px/);
+        expect(dock).toMatch(/\.gh-ghost-label\s*\{[^}]*font-size:\s*15\.2px/);
+        // Default (before Home has measured its box): handheld.
+        expect(homeCss()).toBe(homeCss(CARD_SCALE_HANDHELD));
+    });
+    it('homeCss clamps the title to 3 lines with an ellipsis, keeping balance and the shadow, in a 2-line slot', () => {
+        const css = homeCss();
+        const title = css.match(/\.gh-title\s*\{[^}]*\}/)?.[0] ?? '';
+        expect(title).toMatch(/display:\s*-webkit-box\s*!important/);
+        expect(title).toMatch(/-webkit-line-clamp:\s*3\s*!important/);
+        expect(title).toMatch(/-webkit-box-orient:\s*vertical\s*!important/);
+        expect(title).toMatch(/overflow:\s*hidden\s*!important/);
+        // Not shrunk to the 2-line slot: a third line keeps its height and rises above it.
+        expect(title).toMatch(/flex:\s*0 0 auto\s*!important/);
+        expect(title).toMatch(/text-wrap:\s*balance/);
+        expect(title).toMatch(/text-shadow:\s*0 4px 30px rgba\(0,0,0,\.4\)/);
+        expect(title).toMatch(/font-size:\s*58px/);
+        // Room for descenders and the shadow inside the clip, cancelled by equal negative margins (layout stays 116 tall).
+        expect(title).toMatch(/padding:\s*16px\s*!important/);
+        expect(title).toMatch(/margin:\s*-16px\s*!important/);
+        expect(TITLE_BLOCK.titleLines).toBe(2);
+        expect(TITLE_BLOCK.maxTitleLines).toBe(3);
+    });
+    describe('title block: fixed from the eyebrow down, the title grows upward', () => {
+        it('order is title slot, eyebrow, chips, actions, each 18 apart (actions add their 8 margin)', () => {
+            const two = titleBlockLayout(2);
+            expect(two.slotTop).toBe(118);
+            expect(two.titleTop).toBe(118);
+            expect(two.eyebrowTop).toBe(118 + 116 + 18); // 252
+            expect(two.chipsTop).toBeCloseTo(252 + 14.4 + 18, 5); // 284.4
+            expect(two.actionsTop).toBeCloseTo(284.4 + 69 + 18 + 8, 5); // 379.4
+            expect(two.bottom).toBeCloseTo(433.4, 5);
+        });
+        it('a one-line title only moves the title down inside its slot: eyebrow, chips and actions do not move', () => {
+            const one = titleBlockLayout(1);
+            const two = titleBlockLayout(2);
+            expect(one.titleTop).toBe(two.titleTop + 58);
+            expect(one.eyebrowTop).toBe(two.eyebrowTop);
+            expect(one.chipsTop).toBe(two.chipsTop);
+            expect(one.actionsTop).toBe(two.actionsTop);
+            expect(one.bottom).toBe(two.bottom);
+        });
+        it('a three-line title rises one line above the slot, leaving the rest where it is; clamps to 1..3 lines', () => {
+            const two = titleBlockLayout(2);
+            const three = titleBlockLayout(3);
+            expect(three.titleTop).toBe(two.titleTop - 58);
+            expect(three.eyebrowTop).toBe(two.eyebrowTop);
+            expect(three.bottom).toBe(two.bottom);
+            expect(titleBlockLayout(9)).toEqual(three);
+            expect(titleBlockLayout(0)).toEqual(titleBlockLayout(1));
+            expect(titleBlockLayout(NaN)).toEqual(titleBlockLayout(1));
+        });
+        it('a three-line title still starts below the 52 px safe area on every screen, with the stack shift', () => {
+            for (const h of [800, 466 / (828 / 1440), 810.75]) {
+                expect(titleBlockLayout(3).titleTop + stackShift(h)).toBeGreaterThanOrEqual(52);
+            }
+        });
+        it('worst case (2-line title) clears Steam\'s 52 px top bar on every screen, with the stack shift', () => {
+            for (const h of [800, 466 / (828 / 1440), 810.75]) {
+                // Its bleed (16) is for descenders and the shadow; the glyphs start at the slot top.
+                expect(titleBlockLayout(2).titleTop + stackShift(h) - TITLE_BLOCK.titleBleed).toBeGreaterThan(52 + 40);
+            }
+        });
+        it('the CSS: a 116-tall slot aligning the title to its bottom, a one-line eyebrow, a fixed-height chip row', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-title-slot\s*\{[^}]*height:\s*116px\s*!important[^}]*justify-content:\s*flex-end/);
+            expect(css).toMatch(/\.gh-eyebrow\s*\{[^}]*white-space:\s*nowrap[^}]*text-overflow:\s*ellipsis/);
+            expect(css).toMatch(/\.gh-chips\s*\{[^}]*height:\s*69px\s*!important[^}]*flex-wrap:\s*nowrap/);
+        });
+    });
+    it('the tallest title block (2-line title) ends above the recents glow at both card scales', () => {
+        // 118 + eyebrow 14.4 + 18 + title 2 x 58 + 18 + chips 69 + 18 + 8 + 54 = 433.4
+        expect(titleBlockBottom()).toBeCloseTo(433.4, 5);
+        // Glow top = row top - 12 x scale (blur 40 - offset 16 - spread 12) - the 1px ring.
+        const hand = recentsGlowTop(recentsGeometry(CARD_SCALE_HANDHELD));
+        const dock = recentsGlowTop(recentsGeometry(CARD_SCALE_DOCKED));
+        expect(hand).toBeCloseTo(464 - 19.2 - 1, 5); // 443.8, 10.4 below the actions (433.4)
+        expect(dock).toBeCloseTo(464 - 19.2 - 1, 5); // 443.8
+        expect(titleBlockBottom()).toBeLessThan(dock);
+        expect(titleBlockBottom()).toBeLessThan(hand);
+        // The CSS uses the same metrics.
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-title-block\s*\{[^}]*top:\s*calc\(118px - var\(--gh-top\)\)[^}]*gap:\s*18px/);
+        expect(css).toMatch(/\.gh-actions\s*\{[^}]*margin:\s*8px 0 0 0/);
+        expect(css).toMatch(/\.gh-btn\s*\{[^}]*height:\s*54px/);
+        expect(homeCss(CARD_SCALE_DOCKED)).toMatch(/\.gh-cap\.gh-cap-focus\s*\{[^}]*0 25\.6px 64px -19\.2px var\(--glance-accent\)/);
+    });
+    describe('stackShift: the whole Home stack moves down into the bottom slack', () => {
+        // Tab strip 700 + 33.6 (padding 8 + 10, 13px at line-height 1.2) = 733.6; it ends 18 above the 46 legend reserve.
+        it('pins the tab strip metrics', () => {
+            expect(FEED_SHEET.tabsTop).toBe(700);
+            expect(FEED_SHEET.tabHeight).toBeCloseTo(33.6, 5);
+            expect(FEED_SHEET.legendReserve).toBe(46);
+            expect(FEED_SHEET.tabClearance).toBe(18);
+            expect(FEED_SHEET.raise).toBe(440);
+        });
+        it('per screen: 1080p TV / Ally 16:9 (canvas 1440 x 810.75) 13, handheld 828x466 (810.4) 12, Deck 1280x800 (800) 2', () => {
+            expect(stackShift(810.75)).toBe(13); // docked, probed: root 1500 x 844.5 at scale 1.0417
+            expect(stackShift(466 / (828 / 1440))).toBe(12);
+            expect(stackShift(810)).toBe(12);
+            expect(stackShift(800)).toBe(2);
+        });
+        it('the tab strip then ends 18-19 above the legend reserve (about 24 above Steam\'s real 40 px legend docked)', () => {
+            for (const h of [800, 810, 810.75]) {
+                const gap = h - FEED_SHEET.legendReserve - (FEED_SHEET.tabsTop + FEED_SHEET.tabHeight + stackShift(h));
+                expect(gap).toBeGreaterThanOrEqual(18);
+                expect(gap).toBeLessThan(19);
+            }
+        });
+        it('never moves up, is bounded, and tolerates broken input', () => {
+            expect(stackShift(700)).toBe(0);
+            expect(stackShift(5000)).toBe(MAX_STACK_SHIFT);
+            expect(stackShift(NaN)).toBe(0);
+            expect(stackShift(-1)).toBe(0);
+        });
+        it('the CSS moves the page as one unit and the raised sheet keeps its old place (rise 440 + shift)', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-root\s*\{[^}]*--gh-shift:\s*0px/);
+            expect(css).toMatch(/\.gh-page\s*\{[^}]*top:\s*var\(--gh-shift\)\s*!important[^}]*height:\s*100%/);
+            expect(css).toMatch(/\.gh-page\.gh-page-up\s*\{[^}]*transform:\s*translateY\(calc\(-1 \* var\(--gh-raise, 440px\) - var\(--gh-shift\)\)\)/);
+            expect(css).toMatch(/\.gh-tabs\s*\{[^}]*top:\s*calc\(700px - var\(--gh-top\)\)/);
+        });
+        it('Home handles a finger itself: no browser panning, and a dragged feed row follows the finger', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-root\s*\{[^}]*touch-action:\s*none\s*!important/);
+            expect(css).toMatch(/\.gh-feed-track\.gh-feed-drag\s*\{[^}]*transition:\s*none\s*!important/);
+        });
+        it('the tabs take taps only with the sheet up: at rest they are out of sight under the games row', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-tabs\s*\{[^}]*pointer-events:\s*none\s*!important/);
+            expect(css).toMatch(/\.gh-page-up \.gh-tabs\s*\{[^}]*pointer-events:\s*auto\s*!important/);
+        });
+        it('with the largest shift the title block still clears the top bar and the raised cards clear the legend', () => {
+            for (const h of [800, 810, 810.75]) {
+                const shift = stackShift(h);
+                expect(TITLE_BLOCK.top + shift).toBeGreaterThan(52 + 40);
+                // Raised: cards 756 + shift - (440 + shift) = 316, 260 tall: end 576, far above the legend.
+                expect(756 + 260 + shift - (FEED_SHEET.raise + shift)).toBeLessThan(h - FEED_SHEET.legendReserve);
+            }
+        });
+    });
+    it("Steam's own controller and gear icons are drawn at the page's size", () => {
+        expect(homeCss()).toMatch(new RegExp(`\\.gh-steam-icon svg\\s*\\{[^}]*width:\\s*${PAGE_LAYOUT.circleIcon}px[^;]*;\\s*height:\\s*${PAGE_LAYOUT.circleIcon}px`));
+    });
+    it('the cloud circle is the same circle as the others; only its icon takes the state colour, with a halo', () => {
+        const css = homeCss();
+        expect(css).not.toMatch(/\.gh-btn-cloud\s*\{/);
+        expect(css).toMatch(/\.gh-btn-cloud svg\s*\{[^}]*width:\s*26px[^}]*drop-shadow/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-ok\s*\{\s*color:\s*#5cf2b4\s*!important/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-busy\s*\{\s*color:\s*#ffd84d/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-bad\s*\{\s*color:\s*#ff8585/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-off\s*\{\s*color:\s*#c4c9d1/);
+    });
+    it('feed rows: card height from the row (inline variable), rows and their header placed inline, compact wide cards', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-card \{[^}]*height: var\(--gh-card-h, 260px\) !important/);
+        expect(css).not.toMatch(/\.gh-feed \{[^}]*height:/);
+        expect(css).toMatch(/\.gh-feed-row \{[^}]*position: absolute/);
+        expect(css).toMatch(/\.gh-feed-row-title \{[^}]*height: 24px[^}]*text-transform: uppercase[^}]*color: rgba\(255,255,255,\.62\) !important; \}/);
+        expect(css).toMatch(/\.gh-card-wide \.gh-card-title \{[^}]*font-size: 14px/);
+    });
+    it('card and capsule edges are drawn over the art (no border beside it), so no bright bottom row can show', () => {
+        const css = homeCss();
+        for (const sel of ['gh-card', 'gh-cap']) {
+            expect(css).toMatch(new RegExp(`\\.${sel} \\{[^}]*border: none !important`));
+            expect(css).toMatch(new RegExp(`\\.${sel}::after \\{[^}]*content: '' !important[^}]*inset: 0 !important[^}]*border-radius: inherit[^}]*pointer-events: none[^}]*box-shadow: inset 0 0 0 1px var\\(--gh-edge\\)`));
+        }
+        // The same edge colours as before, now as --gh-edge.
+        expect(css).toMatch(/\.gh-card \{[^}]*--gh-edge: rgba\(255,255,255,\.1\)/);
+        expect(css).toMatch(/\.gh-card\.gh-card-focus, \.gh-card:focus \{[^}]*--gh-edge: rgba\(255,255,255,\.3\)/);
+        expect(css).toMatch(/\.gh-cap \{[^}]*--gh-edge: rgba\(255,255,255,\.08\)/);
+        expect(css).toMatch(/\.gh-cap-sel \{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
+        expect(css).toMatch(/\.gh-ghost \{[^}]*--gh-edge: rgba\(255,255,255,\.06\)/);
+        expect(css).not.toMatch(/\.gh-(card|cap)[^{]*\{[^}]*border-color/);
+        // The shade reaches 1px past the art.
+        expect(css).toMatch(/\.gh-card-shade \{[^}]*inset: -1px 0 !important/);
+    });
+    it('trending cards: small overlapping friend avatars top right, "+N" pill', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-card-friends \{[^}]*position: absolute !important[^}]*right: 10px[^}]*top: 10px/);
+        expect(css).toMatch(/\.gh-card-friend \{[^}]*width: 24px[^}]*border-radius: 3px/);
+        expect(css).toMatch(/\.gh-card-friend-more \{[^}]*width: auto/);
+    });
+    it('news art is fitted whole: contained at the top (centred on the featured card) over a blurred cover copy', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-card-fit-blur \{[^}]*inset: -28px[^}]*background-size: cover[^}]*filter: blur\(24px\)/);
+        expect(css).toMatch(/\.gh-card-fit \{[^}]*inset: 0[^}]*background-size: contain[^}]*background-position: center top/);
+        expect(css).toMatch(/\.gh-card-featured \.gh-card-fit \{\s*background-position: center/);
+        expect(css).toMatch(/\.gh-card-fitted \.gh-card-title \{\s*-webkit-line-clamp: 2/);
+    });
+    it('friend card placeholder: blurred, darkened avatar backdrop, faint presence tint, accent gradient without an avatar', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-card-backdrop \{[^}]*inset: -28px[^}]*background-size: cover[^}]*filter: blur\(28px\) saturate\(\.55\) brightness\(\.5\)/);
+        expect(css).toMatch(/\.gh-card-backdrop-none \{[^}]*filter: none[^}]*linear-gradient\(160deg, color-mix\(in srgb, var\(--gh-card-accent\) 38%/);
+        expect(css).toMatch(/\.gh-card-tint-online \{\s*background: rgba\(140,214,29,0\.12\)/);
+        expect(css).toMatch(/\.gh-card-tint-away \{\s*background: rgba\(76,180,255,0\.12\)/);
+        expect(hexAlpha('#4cb4ff', 0.5)).toBe('rgba(76,180,255,0.5)');
+    });
+    it('friend pictures are squares with slightly rounded corners (as Steam), rings and outlines follow the corners', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-avatar \{[^}]*width: 42px[^}]*height: 42px[^}]*border-radius: 5px !important/);
+        expect(css).toMatch(/\.gh-avatar-img \{[^}]*border-radius: inherit/);
+        expect(css).toMatch(/\.gh-card-friend \{[^}]*border-radius: 3px !important[^}]*box-shadow: 0 0 0 2px/);
+        expect(css).not.toMatch(/\.gh-(avatar|card-friend)[^{]*\{[^}]*border-radius: 50%/);
+    });
+    it('the Friends tab count: faded with nobody online, the online green (not the accent) with anyone connected', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-tab-count \{[^}]*color: rgba\(255,255,255,\.4\) !important/);
+        expect(css).toMatch(/\.gh-tab-count\.gh-tab-count-on \{\s*color: #8cd61d !important/);
+        expect(css).not.toMatch(/\.gh-tab-count[^{]*\{[^}]*--glance-accent/);
+    });
+    it('friend avatars: green ring online or in game, Steam\'s away blue away, offline no ring and dimmed', () => {
+        const css = homeCss();
+        expect(css).toMatch(/\.gh-card-ring-online \{\s*--gh-ring: #8cd61d/);
+        expect(css).toMatch(/\.gh-card-ring-away \{\s*--gh-ring: #4cb4ff/);
+        expect(css).toMatch(/\.gh-card-offline \.gh-avatar \{[^}]*box-shadow: none !important[^}]*opacity: \.55/);
+        expect(css).not.toMatch(/\.gh-card-ingame \{[^}]*--gh-ring/);
+    });
+});
+
+describe('family pill on Home', () => {
+    it('sits just left of the store pill (inside it, so it follows it), drawn like it', () => {
+        const css = homeCss();
+        const rule = css.match(/\.gh-family\s*\{[^}]*\}/)?.[0] ?? '';
+        expect(rule).toMatch(/position: absolute !important; right: calc\(100% \+ 10px\) !important; top: 50% !important; transform: translateY\(-50%\);/);
+        expect(rule).toContain(sourcePillLook((n) => `${n}px`).split(';')[0]);
+        expect(css).toMatch(/\.gh-family-icon\s*\{/);
+    });
+});
+
+describe('homeCss logo', () => {
+    it("leaves the logo's size to GameTitle's inline area sizing, as on the game page (an !important size here overrode it)", () => {
+        const body = /\.gh-logo \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).not.toBe('');
+        for (const prop of ['width', 'height', 'max-width', 'max-height']) expect(body, prop).not.toMatch(new RegExp(`(^|[;\\s])${prop}:`));
+    });
+});
+
+describe('homeCss accent on hidden bars', () => {
+    it('bars nobody sees take a new accent at once (no colour transition): an unselected card, the hidden feed and tabs', () => {
+        const css = homeCss();
+        // Each L1/R1 step changes the accent: these ran ~30 colour transitions a step, all invisible (measured on the Ally).
+        expect(css).toMatch(/\.gh-cap:not\(\.gh-cap-focus\) \.gh-cap-bar \{ transition: opacity 250ms !important; \}/);
+        expect(css).toMatch(/\.gh-card:not\(\.gh-card-focus\):not\(:focus\) \.gh-card-bar \{ transition: opacity 250ms !important; \}/);
+        expect(css).toMatch(/\.gh-page:not\(\.gh-page-up\) \.gh-tab-line \{ transition: none !important; \}/);
+    });
+});
+
+describe('statusCss', () => {
+    it("one status bar at a time: while Home's is up, the page's (mounted later, on the same body) stays invisible", () => {
+        // Two stacked bars drew their white text twice, brighter, as Home's frozen copy faded over them (Michael: it blinked white).
+        expect(statusCss()).toMatch(/\.gg-status-host ~ \.gg-status-host \{[^}]*visibility: hidden/);
+    });
+});
+
+describe('homeCss Play pill', () => {
+    it('white words and glyph on the accent, as on the page', () => {
+        const body = /\.gh-btn-play \{([^}]*background: var\(--glance-accent\)[^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).toContain('color: #fff');
+        expect(body).not.toContain('--gh-on-accent');
+    });
+    it("focused: a white ring and accent glow, scaled by the page's focus scale (the page focuses its Play the same)", () => {
+        const body = /:where\(html:not\(\[data-gg-mouse\]\)\) \.gh-btn\.gh-focus, :where\(html:not\(\[data-gg-mouse\]\)\) \.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).toContain('0 0 0 2px rgba(255,255,255,.9)');
+        expect(body).toContain(`scale(${PAGE_LAYOUT.focusScale})`);
+        // The Play pill grows by what a circle grows (its height's share), so its gap to the circles stays.
+        const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
+        expect(/\.gh-actions > \.gh-btn-play\.gh-focus, :where\(html:not\(\[data-gg-mouse\]\)\) \.gh-actions > \.gh-btn-play\.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
+    });
+});
+
+describe('HOME_PILL arrow', () => {
+    it("is the page's arrow at Home's pill height (54 against the page's 60), so its morph grows it evenly", () => {
+        expect(HOME_PILL.arrow).toBe(Math.round((PAGE_LAYOUT.playArrow.w * 54) / PAGE_LAYOUT.icon));
+        expect(HOME_PILL.arrowGlyph).toBe(Math.round((PAGE_LAYOUT.playArrow.glyph * 54) / PAGE_LAYOUT.icon));
+    });
+});
+
+describe('the way back (B from a page)', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    it("Home's title, chips, buttons and row fade in over the art, which is there at once (opacity only)", () => {
+        expect(css).not.toMatch(/\.gh-back \.gh-hero/);
+        // From transparent to each part's own opacity (no end value: the tabs and bars that rest hidden stay hidden).
+        expect(css).toMatch(/@keyframes gh-return-in \{ from \{ opacity: 0; \} \}/);
+        expect(css).toMatch(new RegExp(`animation: gh-return-in ${RETURN_TIMINGS.fade}ms ease backwards`));
+    });
+    it('never as one layer: a fading parent cuts the glass inside it off from the art, which then shows unblurred until the fade ends', () => {
+        expect(css).not.toMatch(/\.gh-back \.gh-safe\s*\{/);
+        const glass = HOME_GLASS.join(', ');
+        // The glass fades itself; around it, the largest parts that hold no glass fade, each once.
+        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back:not\\(\\.gh-bridge\\) \\.gh-safe :is\\(${esc(glass)}\\)[,\\s]`));
+        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back:not\\(\\.gh-bridge\\) :is\\(\\.gh-safe, \\.gh-safe :has\\(${esc(glass)}\\)\\) > :not\\(:has\\(${esc(glass)}\\)\\):not\\(${esc(glass)}\\)`));
+    });
+    it("HOME_GLASS lists every part of Home with a backdrop blur (the open transition's panels and extras, and the status bar, are outside .gh-safe)", () => {
+        const blurred = [...css.matchAll(/([^{}]+)\{[^}]*backdrop-filter: blur/g)].map((m) => m[1].trim());
+        expect(blurred.length).toBeGreaterThan(0);
+        for (const sel of blurred) {
+            if (['.gh-open-shell', '.gh-open-extras', '.gh-open-circle', '.gh-status'].some((outside) => sel.includes(outside))) continue;
+            const last = sel.split(',').map((p) => p.trim().split(/[\s>+~]+/).pop()!);
+            for (const compound of last) expect(HOME_GLASS.some((g) => compound.includes(g)), sel).toBe(true);
+        }
+    });
+});
+
+describe('homeCss mouse hover', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const ring = '0 0 0 2px rgba(255,255,255,.45)';
+    it("the buttons (Play pill, circles) take the game cards' ring under a mouse, focused or not (no focus look then), ring only", () => {
+        const body = css.match(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-btn-stream\) \{([^}]*)\}/)?.[1] ?? '';
+        expect(body).toContain(`box-shadow: ${ring} !important`);
+        expect(body).not.toContain('transform');
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-actions > \.gh-btn-play:has\(\+ \.gh-btn-stream:hover\) \{/);
+    });
+    it('a feed tab brightens its label under a mouse (not the selected one)', () => {
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-tab:hover:not\(\.gh-tab-on\) \{[^}]*color: rgba\(255,255,255,\.85\)/);
+    });
+    it("in mouse mode the buttons' and tabs' focus looks are off (Steam puts its focus back on a clicked button), at no weight", () => {
+        const gate = ':where(html:not([data-gg-mouse]))';
+        // Every focus look of a button or a tab, and its DOM-focus twin, sits behind the gate; :where() adds nothing to its weight.
+        for (const sel of selectors(css).filter((s) => /\.gh-(btn[\w-]*|tab)[^{]*(\.gh-focus|\.gh-tab-focus)(?![\w-])/.test(s) && !/:not\(\.gh-focus\)/.test(s))) expect(sel, sel).toContain(gate);
+        expect(css).toContain(`${gate} .gh-btn.gh-focus`);
+        expect(css).toContain(`${gate} .gh-tab.gh-tab-focus .gh-tab-line`);
+        // The selected game keeps its look: it says whose art and buttons these are.
+        for (const sel of selectors(css).filter((s) => s.includes('gh-recents-focus'))) expect(sel).not.toContain(gate);
+    });
+    it('the game cards keep their ring, now the shared one', () => {
+        expect(css).toContain(`.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)`);
+        expect(css).toMatch(new RegExp(`\\.gh-cap\\.gh-cap-hover[^{]*\\{[^}]*box-shadow: ${ring.replace(/[().]/g, '\\$&')}`));
+    });
+    it('no hover look without mouse mode: every :hover rule is under html[data-gg-mouse]', () => {
+        for (const sel of css.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
+    });
+});
+
+describe('homeCss sheet toggle (mouse only)', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const geo = recentsGeometry(CARD_SCALE_HANDHELD);
+    const body = (sel: string) => css.match(new RegExp(`(?:^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? '';
+    it('a chevron centred in the gap above the games row, hidden and unclickable unless a mouse is in use', () => {
+        const rest = body('.gh-sheet-toggle');
+        expect(rest).toContain('left: 50%');
+        // Its bottom 18 px above the cards (Michael: 3 was too tight); the buttons' row ends left of it, so it may rise past them.
+        expect(rest).toContain(`top: calc(${geo.top - 18 - 24}px - var(--gh-top))`);
+        // Above the tabs row, which spans the page and takes clicks once the sheet is up (it covered the chevron there).
+        expect(rest).toMatch(/z-index: [1-9]/);
+        expect(rest).toContain('opacity: 0');
+        expect(rest).toContain('pointer-events: none');
+        const on = body('html[data-gg-mouse] .gh-sheet-toggle');
+        expect(on).toContain('opacity: 1');
+        expect(on).toContain('pointer-events: auto');
+    });
+    it('with the sheet up it moves onto the tabs row and points up, by transform only, with the sheet', () => {
+        const dy = Math.round((FEED_SHEET.tabsTop + (FEED_SHEET.tabHeight - 24) / 2 - (geo.top - 18 - 24)) * 100) / 100;
+        expect(body('.gh-page-up .gh-sheet-toggle')).toContain(`transform: translate(-50%, ${dy}px) rotate(180deg)`);
+        expect(body('.gh-sheet-toggle')).toMatch(/transition: transform 500ms/);
+    });
+    it('brightens under the mouse, and goes away while a game opens', () => {
+        expect(body('html[data-gg-mouse] .gh-sheet-toggle:hover')).toContain('color: #fff');
+        expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-sheet-toggle \{[^}]*opacity: 0/);
+    });
+    it('the tabs row has no "more" hint any more (it never showed: inside the tabs, which are hidden at rest)', () => {
+        expect(css).not.toContain('gh-tabs-more');
+    });
+});
