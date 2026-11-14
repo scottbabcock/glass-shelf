@@ -1,12 +1,12 @@
 # Glass Shelf
 
-A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode that replaces the Library with a glassy, two-panel **Spotlight Library**: a game grid on one side and a full-bleed artwork inspector on the other.
+A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode that replaces **Home** and the **Library** with a glassy Spotlight design: full-bleed game art behind smoked-glass panels.
 
 > **Status: early development (0.x).** The MVP is in place; next comes understanding and optimizing the core, then deliberate plugin integrations. Expect breaking changes.
 
 ## Credits
 
-Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak18), which grew out of **[Game Glance](https://github.com/michpalm/game-glance)** by Michael Palma. Both are MIT licensed; see [LICENSE](LICENSE) and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak18), which grew out of **[Game Glance](https://github.com/michpalm/game-glance)** by Michael Palma. Spotlight Home is ported from Game Glance 3.4.0. Both projects are MIT licensed; see [LICENSE](LICENSE) and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Roadmap
 
@@ -16,15 +16,24 @@ Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak1
 
 ## Features (current)
 
-- **Spotlight Library**: replaces `/library`, `/library/games` and `/library/all` with a game grid plus an inspector panel (artwork, play time, achievements, install size, description).
+### Spotlight Home
+- **Hero**: the selected recent game's art full-screen, with its title, last played, play time and achievements.
+- **Actions**: Play (or Resume / Download / Update with progress), controller settings, game info, Steam Cloud status.
+- **Recent games row**: L1/R1 or Left/Right to move through your recent games, ending in a card that opens the Library.
+- **Feed** (press Down): What's New (news and recently updated games), Friends (who's playing what), Recommended (games to play next and wishlist deals), Collections.
+- **Status bar**: clock, battery, connection and your avatar.
+- **Safe fallback**: if Home fails to render, Steam's own Home is shown.
+
+### Spotlight Library
+- **Grid and inspector**: replaces `/library`, `/library/games` and `/library/all` with a game grid plus an inspector panel (artwork, play time, achievements, install size, description).
 - **Accent glow** sampled from each game's hero art.
 - **Controller and touch**: D-pad/stick navigation, L1/R1 to switch tabs, View for the game menu, B to go back.
 - **Collections**: fanned covers with automatic console icons, plus **Customize Art** (Y) for a custom image or icon per collection.
-- **Safe fallback**: if the Spotlight Library fails to render, Steam's own Library is shown.
+- **Safe fallback**: if the Library fails to render, Steam's own Library is shown.
 
 ### No settings
 
-Glass Shelf is opinionated: there is nothing to configure. The fixed choices live in `src/library/design.ts`. It only remembers what you choose inside the library: the sort order and any custom collection art. To turn it off, disable the plugin in Decky.
+Glass Shelf is opinionated: there is nothing to configure. The fixed choices live in `src/library/design.ts` and as constants in `src/home/`. It only remembers what you choose inside the library: the sort order and any custom collection art. To turn it off, disable the plugin in Decky.
 
 ## Development
 
@@ -50,8 +59,9 @@ pnpm package          # build out/glass-shelf.zip for Decky
 
 | Path | What lives there |
 |---|---|
-| `src/index.tsx` | Plugin entry: loads settings, patches the Library route, Quick Access settings panel |
-| `src/patches/libraryPage.tsx` | Hooks Steam's Library route and swaps in the Spotlight Library |
+| `src/index.tsx` | Plugin entry: loads prefs, patches the Home and Library routes, Quick Access panel |
+| `src/patches/` | Hook Steam's Home and Library routes and swap in the Spotlight views |
+| `src/home/` | Spotlight Home: hero, actions, recent games row, feed sheet, status bar and their CSS |
 | `src/library/` | The Spotlight Library UI, data building, sorting, artwork, CSS and fixed design constants |
 | `src/data/` | Remembered prefs, caching, Steam data access, updater |
 | `main.py`, `py_modules/glass_shelf/` | Python backend methods the frontend calls via `@decky/api` |
