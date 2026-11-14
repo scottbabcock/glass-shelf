@@ -691,6 +691,8 @@ export function buildCategories(mockGames?: LibraryGameItem[], tabMasterData?: T
                 count: regularGames.slice(0, 3).length,
                 games: regularGames.slice(0, 3),
             },
+            { id: 'col-snes', name: 'SNES', count: regularGames.slice(3, 6).length, games: regularGames.slice(3, 6) },
+            { id: 'col-n64', name: 'Nintendo 64', count: regularGames.slice(6, 8).length, games: regularGames.slice(6, 8) },
         ];
 
         const steamGames = regularGames.filter((g) => !g.isShortcut);

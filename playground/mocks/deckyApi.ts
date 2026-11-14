@@ -10,7 +10,7 @@ export function callable(methodName: string) {
             return null;
         }
         if (methodName === 'get_version') {
-            return '2.1.0';
+            return '0.1.0';
         }
         return null;
     };
@@ -35,4 +35,13 @@ export const toaster = {
 
 export function definePlugin(fn: any) {
     return fn;
+}
+
+export enum FileSelectionType {
+    FILE = 0,
+    FOLDER = 1,
+}
+
+export async function openFilePicker(..._args: unknown[]): Promise<{ path: string; realpath: string }> {
+    throw new Error('File picker is not available in the playground');
 }
