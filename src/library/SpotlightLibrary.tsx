@@ -2,7 +2,6 @@ import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, us
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
 import { cache } from '../data/cache';
-import { HltbResult, lookupHltb } from '../data/hltb';
 import { settings, useSettings } from '../data/settings';
 import { getDescription, peekSteamLanguage } from '../data/steam';
 import { openGameActions } from './gameActions';
@@ -510,11 +509,10 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
         });
     }, [activeCategoryId, selectedCollectionId, selectedGame?.appId, selectedGameIdx, isCollectionsTab, focusZone]);
 
-    // Asynchronous details for selected game (HLTB, Description, Accent)
+    // Asynchronous details for selected game (description, accent)
     const artworkVersion = useArtworkVersion();
     const [gameAccent, setGameAccent] = useState<string>(selectedGame?.accent ?? DEFAULT_ACCENT);
     const [gameDesc, setGameDesc] = useState<string | null>(selectedGame?.description ?? null);
-    const [gameHltb, setGameHltb] = useState<HltbResult | null>(null);
 
     // Resolve hero candidate URLs for ambient background (includes custom, local, and Steam CDN fallbacks)
     const heroCandidates = useMemo(() => {
@@ -550,7 +548,6 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
         // Reset details for new game
         setGameAccent(selectedGame.accent ?? DEFAULT_ACCENT);
         setGameDesc(selectedGame.description ?? null);
-        setGameHltb(null);
 
         let cancelled = false;
 
@@ -572,17 +569,6 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
                 })
                 .catch(() => {});
         }
-
-        // Fetch HLTB stats
-        lookupHltb({
-            appId: selectedGame.appId,
-            name: selectedGame.name,
-            isShortcut: selectedGame.isShortcut,
-        })
-            .then((result) => {
-                if (!cancelled) setGameHltb(result);
-            })
-            .catch(() => {});
 
         return () => {
             cancelled = true;
@@ -1045,7 +1031,6 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
     const activeCollectionIdx = isInsideSubCollection
         ? (activeCategory?.collections?.findIndex((c) => c.id === selectedCollectionId) ?? 0)
         : -1;
-    const hltbHours = gameHltb?.status === 'found' ? gameHltb.times.main : null;
 
     return (
         <Focusable
@@ -1113,7 +1098,6 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
                     isCollectionView={isCollectionsTab && !isInsideSubCollection}
                     accent={Boolean(currentSettings.dimUninstalledGames && selectedGame && !selectedGame.installed) ? '#707784' : gameAccent}
                     description={gameDesc}
-                    hltbMainHours={hltbHours}
                     preferLogos={currentSettings.gameLogo}
                     onPlay={() => handlePlayGame()}
                     onDetails={(sourceEl) => handleDetails(selectedGame, sourceEl)}
