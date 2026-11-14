@@ -1,0 +1,55 @@
+name: Release
+
+# Push a tag like v0.2.0 (after `pnpm bump 0.2.0` and committing) to publish a release.
+# Tags with a suffix (v0.2.0-beta.1) become pre-releases, which the in-plugin updater ignores.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+permissions:
+  contents: write # create the release and upload the zip
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check the tag matches package.json and plugin.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")
+          plugin=$(node -p "JSON.parse(require('fs').readFileSync('plugin.json','utf8')).version")
+          echo "tag=$tag package.json=$pkg plugin.json=$plugin"
+          if [ "$tag" != "$pkg" ] || [ "$tag" != "$plugin" ]; then
+            echo "::error::Tag v$tag does not match package.json ($pkg) and plugin.json ($plugin). Run 'pnpm bump $tag', commit, and re-tag."
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pip install pytest && python -m pytest -q tests/py
+      - name: Build and package
+        run: python scripts/package.py
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=(--title "Glass Shelf $GITHUB_REF_NAME" --generate-notes --verify-tag)
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" out/glass-shelf.zip "${flags[@]}"

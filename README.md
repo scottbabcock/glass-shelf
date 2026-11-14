@@ -60,8 +60,16 @@ pnpm package          # build out/glass-shelf.zip for Decky
 
 ## Releasing
 
-The in-plugin updater checks this repo's GitHub releases. To publish version `X.Y.Z`:
+Releases are built and published by GitHub Actions (`.github/workflows/release.yml`); the in-plugin updater picks them up from this repo's releases.
 
-1. Bump `version` in `package.json` and `plugin.json`.
-2. `pnpm package`.
-3. Create a GitHub release tagged `vX.Y.Z` and attach `out/glass-shelf.zip` (the asset must keep that exact name).
+1. `pnpm bump 0.2.0` sets the version in `package.json` and `plugin.json`. Commit it as `chore(release): v0.2.0` and get it onto `main` (directly or through a PR).
+2. Tag the commit on `main` and push the tag, which starts the Release workflow:
+   ```bash
+   git switch main && git pull
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+The workflow checks the tag matches both version fields, runs typecheck and all tests, packages `glass-shelf.zip`, and creates a GitHub release with generated notes and the zip attached.
+
+A tag with a suffix (`pnpm bump 0.2.0-beta.1`, tag `v0.2.0-beta.1`) is published as a **pre-release**: the updater ignores those, so they're safe for testing on your own Deck.

@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "rollup -c",
     "package": "python scripts/package.py",
+    "bump": "node scripts/bump-version.mjs",
     "watch": "rollup -c -w",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
