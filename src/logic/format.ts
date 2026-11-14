@@ -40,7 +40,7 @@ export function formatHours(hours: number, locale: string): string {
     return `${formatNumber(rounded, locale, decimals)} h`;
 }
 
-/** A size like Unifideck's own ("3.2 GB", "512 MB": binary units, one decimal under 100); null when unknown (never "0 B"). */
+/** A human-readable size ("3.2 GB", "512 MB": binary units, one decimal under 100); null when unknown (never "0 B"). */
 export function formatBytes(bytes: unknown, locale: string): string | null {
     if (typeof bytes !== 'number' || !Number.isFinite(bytes) || bytes <= 0) return null;
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];

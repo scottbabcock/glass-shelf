@@ -12,7 +12,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 4000,
                 achievements: null,
-                heroic: null,
                 source: 'Steam',
             },
             {
@@ -23,7 +22,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 1200,
                 achievements: null,
-                heroic: null,
                 source: 'GOG',
             },
         ];
@@ -114,7 +112,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 100,
                 achievements: null,
-                heroic: null,
                 source: 'Steam',
             },
             {
@@ -126,7 +123,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 50,
                 achievements: null,
-                heroic: null,
                 source: 'Soundtrack',
             },
         ];
@@ -187,7 +183,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 500,
                 achievements: null,
-                heroic: null,
                 source: 'Steam',
             },
             {
@@ -199,7 +194,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 0,
                 achievements: null,
-                heroic: null,
                 source: 'Steam',
             },
             {
@@ -211,7 +205,6 @@ describe('libraryData: buildCategories', () => {
                 running: false,
                 playedMinutes: 0,
                 achievements: null,
-                heroic: null,
                 source: 'Steam',
             },
         ];

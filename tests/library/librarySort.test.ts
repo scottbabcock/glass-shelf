@@ -11,7 +11,6 @@ function makeGame(overrides: Partial<LibraryGameItem>): LibraryGameItem {
         running: false,
         playedMinutes: overrides.playedMinutes ?? 0,
         achievements: null,
-        heroic: null,
         source: 'steam',
         lastPlayed: overrides.lastPlayed ?? 0,
         sizeOnDisk: overrides.sizeOnDisk ?? 0,

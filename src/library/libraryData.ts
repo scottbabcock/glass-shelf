@@ -1,5 +1,4 @@
 import { readGameInfo } from '../data/steam';
-import { HeroicRef, heroicStoreLabel } from '../logic/heroic';
 
 export interface LibraryGameItem {
     appId: number;
@@ -12,7 +11,6 @@ export interface LibraryGameItem {
     running: boolean;
     playedMinutes: number;
     achievements: { achieved: number; total: number } | null;
-    heroic: HeroicRef | null;
     source: string;
     accent?: string;
     compat?: number;
@@ -608,7 +606,7 @@ export function rawAppToItem(app: RawApp, isRunning: boolean, soundtrackAppIds?:
         ? 'Soundtrack'
         : !info.isShortcut
             ? 'Steam'
-            : heroicStoreLabel(info.heroic) ?? 'Non-Steam';
+            : 'Non-Steam';
     const size = typeof app.size_on_disk === 'number'
         ? app.size_on_disk
         : Number(app.size_on_disk ?? (mergedOverview as any)?.size_on_disk) || undefined;
@@ -663,7 +661,6 @@ export function rawAppToItem(app: RawApp, isRunning: boolean, soundtrackAppIds?:
         running: isRunning,
         playedMinutes,
         achievements: isSoundtrack ? null : info.achievements,
-        heroic: info.heroic,
         source,
         compat,
         lastPlayed: (mergedOverview as any)?.rt_last_time_played ?? app.rt_last_time_played,
