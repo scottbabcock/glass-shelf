@@ -1,5 +1,5 @@
 export default {
-    name: 'game-glance',
-    version: '3.0.1',
-    author: 'michpalm',
+    name: 'glass-shelf',
+    version: '0.1.0',
+    author: 'Scott Babcock',
 };

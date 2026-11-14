@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Cross-platform packaging script for Game Glance Decky plugin.
-Generates out/game-glance.zip matching Decky Loader's expected distribution layout.
+Cross-platform packaging script for Glass Shelf Decky plugin.
+Generates out/glass-shelf.zip matching Decky Loader's expected distribution layout.
 
 Usage:
     python scripts/package.py
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).absolute().parent.parent
 OUT_DIR = ROOT / "out"
 DIST_DIR = ROOT / "dist"
-PY_MODULES_DIR = ROOT / "py_modules" / "glancelibrary"
+PY_MODULES_DIR = ROOT / "py_modules" / "glass_shelf"
 ICONS_DIR = ROOT / "assets" / "icons"
 
 ROOT_FILES = [
@@ -72,7 +72,7 @@ def get_version():
 
 def package():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    zip_path = OUT_DIR / "glance-library.zip"
+    zip_path = OUT_DIR / "glass-shelf.zip"
 
     print(f"\n==> Packaging into {zip_path}...")
 
@@ -85,7 +85,7 @@ def package():
         for fname in ROOT_FILES:
             fpath = ROOT / fname
             if fpath.exists():
-                arcname = f"glance-library/{fname}"
+                arcname = f"glass-shelf/{fname}"
                 zf.write(fpath, arcname)
                 print(f"  + {arcname}")
             else:
@@ -97,27 +97,27 @@ def package():
                 if fpath.suffix == ".map":
                     continue  # skip source maps to keep zip small
                 rel_path = fpath.relative_to(DIST_DIR).as_posix()
-                arcname = f"glance-library/dist/{rel_path}"
+                arcname = f"glass-shelf/dist/{rel_path}"
                 zf.write(fpath, arcname)
                 print(f"  + {arcname}")
 
-        # 3. py_modules/glancelibrary/ files (excluding __pycache__ and .pyc)
+        # 3. py_modules/glass_shelf/ files (excluding __pycache__ and .pyc)
         if PY_MODULES_DIR.exists():
             for fpath in sorted(PY_MODULES_DIR.rglob("*")):
                 if fpath.is_file():
                     if "__pycache__" in fpath.parts or fpath.suffix in [".pyc", ".pyo"]:
                         continue
                     rel_path = fpath.relative_to(PY_MODULES_DIR).as_posix()
-                    arcname = f"glance-library/py_modules/glancelibrary/{rel_path}"
+                    arcname = f"glass-shelf/py_modules/glass_shelf/{rel_path}"
                     zf.write(fpath, arcname)
                     print(f"  + {arcname}")
 
-        # 4. Icon assets into glance-library/icons/ (served by Decky Loader at /plugins/glance-library/icons/)
+        # 4. Icon assets into glass-shelf/icons/ (served by Decky Loader at /plugins/glass-shelf/icons/)
         if ICONS_DIR.exists():
             for fpath in sorted(ICONS_DIR.rglob("*")):
                 if fpath.is_file():
                     rel_path = fpath.relative_to(ICONS_DIR).as_posix()
-                    arcname = f"glance-library/icons/{rel_path}"
+                    arcname = f"glass-shelf/icons/{rel_path}"
                     zf.write(fpath, arcname)
                     print(f"  + {arcname}")
 
@@ -126,7 +126,7 @@ def package():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Package Game Glance plugin")
+    parser = argparse.ArgumentParser(description="Package Glass Shelf plugin")
     parser.add_argument("--skip-build", action="store_true", help="Skip rollup build step")
     args = parser.parse_args()
 

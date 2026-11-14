@@ -171,10 +171,10 @@ export function CollectionArtModal({
                 keysToSave.push(collection.name);
             }
             settings.setCollectionCustomArt(keysToSave, entry).catch((e) => {
-                console.error('[glance-library] Failed to save custom artwork:', e);
+                console.error('[glass-shelf] Failed to save custom artwork:', e);
             });
         } catch (e) {
-            console.error('[glance-library] Failed to save custom artwork:', e);
+            console.error('[glass-shelf] Failed to save custom artwork:', e);
         }
         onSaveSuccess?.();
         onClose();

@@ -163,7 +163,7 @@ export function matchConsoleFromCollectionName(name: string): string | null {
 import { getBundledConsoleIcon } from './consoleIconData';
 
 export function getBundledIconUrl(fileName: string): string {
-    return `/plugins/glance-library/icons/${fileName}`;
+    return `/plugins/glass-shelf/icons/${fileName}`;
 }
 
 const localArtCache = new Map<string, string | null>();
@@ -179,7 +179,7 @@ registerArtworkCacheClearer(clearCollectionImageCache);
 function normalizePathKey(p: string): string {
     return p
         .replace(/^file:\/\//, '')
-        .replace(/^\/plugins\/glance-library\/icons\//, '')
+        .replace(/^\/plugins\/glass-shelf\/icons\//, '')
         .replace(/^\/?icons\//, '');
 }
 
@@ -200,7 +200,7 @@ export function setCachedImageUri(pathOrUrl: string, uri: string): void {
         imageUriCache.set(pathOrUrl, uri);
         const clean = normalizePathKey(pathOrUrl);
         imageUriCache.set(clean, uri);
-        imageUriCache.set(`/plugins/glance-library/icons/${clean}`, uri);
+        imageUriCache.set(`/plugins/glass-shelf/icons/${clean}`, uri);
     }
 }
 
@@ -231,7 +231,7 @@ export async function resolveImageUri(pathOrUrl: string): Promise<string | null>
             return dataUri;
         }
     } catch (e) {
-        console.warn('[glance-library] resolveImageUri getImageDataCall failed:', pathOrUrl, e);
+        console.warn('[glass-shelf] resolveImageUri getImageDataCall failed:', pathOrUrl, e);
     }
     return null;
 }
@@ -244,7 +244,7 @@ export async function preloadPresetIcons(): Promise<void> {
         const uri = await resolveImageUri(fileName);
         if (uri) {
             setCachedImageUri(fileName, uri);
-            setCachedImageUri(`/plugins/glance-library/icons/${fileName}`, uri);
+            setCachedImageUri(`/plugins/glass-shelf/icons/${fileName}`, uri);
         }
     });
     await Promise.allSettled(promises);
@@ -320,7 +320,7 @@ export async function browseLocalCollectionImage(currentPathOrDir?: string): Pro
             }
         }
     } catch (e) {
-        console.warn('[glance-library] browseLocalCollectionImage error/unavailable:', e);
+        console.warn('[glass-shelf] browseLocalCollectionImage error/unavailable:', e);
     }
     return null;
 }
@@ -337,7 +337,7 @@ export async function checkLocalCollectionArt(name: string, id: string): Promise
             return resp.url;
         }
     } catch (e) {
-        console.warn('[glance-library] checkLocalCollectionArt failed:', name, e);
+        console.warn('[glass-shelf] checkLocalCollectionArt failed:', name, e);
     }
     localArtCache.set(cacheKey, null);
     return null;

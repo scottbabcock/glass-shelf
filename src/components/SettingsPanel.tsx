@@ -31,7 +31,7 @@ function UpdatesSection() {
                 <PanelSectionRow>
                     <ButtonItem
                         layout="below"
-                        description="Decky asks to confirm, then installs it and reloads Glance Library."
+                        description="Decky asks to confirm, then installs it and reloads Glass Shelf."
                         onClick={async () => {
                             if (!(await installUpdate(state.release))) {
                                 toaster.toast({

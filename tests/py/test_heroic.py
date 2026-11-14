@@ -1,6 +1,6 @@
 import json
 
-from glancelibrary.heroic import HeroicLibrary, heroic_cache_dirs
+from glass_shelf.heroic import HeroicLibrary, heroic_cache_dirs
 
 
 def write(path, data):

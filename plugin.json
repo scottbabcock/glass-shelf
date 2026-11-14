@@ -1,12 +1,15 @@
 {
-  "name": "Glance Library",
-  "author": "GameGlance Community",
+  "name": "Glass Shelf",
+  "author": "Scott Babcock",
   "flags": [],
-  "version": "1.1.2",
+  "version": "0.1.0",
   "api_version": 1,
   "publish": {
-    "tags": ["library", "theme", "tabmaster"],
-    "description": "Pegasus-inspired Spotlight Library for Steam Game Mode with customizable grid density, collection views, and TabMaster sync.",
+    "tags": [
+      "library",
+      "theme"
+    ],
+    "description": "A glassy, two-panel Spotlight Library for Steam Game Mode.",
     "image": ""
   }
 }
