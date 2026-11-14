@@ -157,7 +157,6 @@ describe('Library Scroll & Touch Navigation', () => {
             running: false,
             playedMinutes: 500,
             achievements: null,
-            heroic: null,
             source: 'Steam',
         };
 
@@ -238,7 +237,6 @@ describe('Library Scroll & Touch Navigation', () => {
             running: false,
             playedMinutes: 500,
             achievements: null,
-            heroic: null,
             source: 'Steam',
             landscapeUrl: 'https://example.com/terraria-header.jpg',
             heroUrl: 'https://example.com/terraria-hero.jpg',

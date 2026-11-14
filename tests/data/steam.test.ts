@@ -11,7 +11,7 @@ describe('readGameInfo', () => {
         );
         expect(info).toEqual({
             appId: 292030, name: 'The Witcher 3: Wild Hunt', isShortcut: false, playedMinutes: 2406,
-            achievements: { achieved: 13, total: 78 }, heroic: null,
+            achievements: { achieved: 13, total: 78 },
         });
     });
     it('detects shortcuts and hides achievements', () => {
@@ -29,17 +29,6 @@ describe('readGameInfo', () => {
         expect(playedMinutesOf(undefined, undefined)).toBe(0);
         expect(playedMinutesOf(-3, 'x')).toBe(0);
         expect(playedMinutesOf(30, NaN)).toBe(30);
-    });
-    it('reads the Heroic link of a shortcut Heroic added', () => {
-        const info = readGameInfo(
-            { appid: 2657861989, display_name: 'Chained Echoes', app_type: 1073741824 },
-            { strShortcutLaunchOptions: 'run com.heroicgameslauncher.hgl --no-gui "heroic://launch?appName=2067731250&runner=gog"' },
-        );
-        expect(info.heroic).toEqual({ runner: 'gog', appName: '2067731250' });
-    });
-    it('ignores launch options on Steam games', () => {
-        const info = readGameInfo({ appid: 5, app_type: 1 }, { strShortcutLaunchOptions: 'heroic://launch/gog/1' });
-        expect(info.heroic).toBeNull();
     });
     it('reads sort_as from overview or details for custom sorting', () => {
         const info = readGameInfo(
@@ -61,7 +50,7 @@ describe('readGameInfo', () => {
         expect(infoDetails.sortAs).toBe('Like A Dragon 0');
     });
     it('tolerates missing data', () => {
-        expect(readGameInfo(undefined, undefined)).toEqual({ appId: 0, name: '', isShortcut: false, playedMinutes: 0, achievements: null, heroic: null });
+        expect(readGameInfo(undefined, undefined)).toEqual({ appId: 0, name: '', isShortcut: false, playedMinutes: 0, achievements: null });
         expect(readGameInfo({ appid: 1, minutes_playtime_forever: 'x' }, { achievements: { nAchieved: 0, nTotal: 0 } }).achievements).toBeNull();
     });
 });

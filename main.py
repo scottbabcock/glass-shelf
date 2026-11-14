@@ -5,22 +5,14 @@ import os
 import decky
 
 
-from glass_shelf.heroic import HeroicLibrary, heroic_cache_dirs
 from glass_shelf.home_errors import FILE_NAME, append_log, start_entry
 from glass_shelf.kv import KvStore
 from glass_shelf.migrate import carry_over, old_data_path
-from glass_shelf.store_lookup import RegistryCache, key_for_appid, store_for_appid
 
 DATA_PATH = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "data.json")
 if carry_over(old_data_path(decky.DECKY_PLUGIN_SETTINGS_DIR), DATA_PATH):
     decky.logger.info("[glass-shelf] carried over data from Ally Game Page")
 KV = KvStore(DATA_PATH)
-REGISTRY = RegistryCache(
-    os.path.join(decky.DECKY_USER_HOME, ".local", "share", "unifideck", "shortcuts_registry.json")
-)
-
-HEROIC = HeroicLibrary(heroic_cache_dirs(decky.DECKY_USER_HOME))
-
 _IMAGE_CACHE: dict = {}
 
 
@@ -44,28 +36,6 @@ class Plugin:
 
     async def kv_delete_prefix(self, prefix: str) -> int:
         return KV.delete_prefix(prefix)
-
-    async def get_store(self, appid: int):
-        try:
-            return store_for_appid(REGISTRY.get(), int(appid))
-        except Exception:
-            decky.logger.exception("[glass-shelf] get_store failed")
-            return None
-
-    async def get_unifideck_key(self, appid: int):
-        # {"store": "gog", "id": "1450711444"}: the key Unifideck's own backend takes (e.g. its get_playtime), or None.
-        try:
-            return key_for_appid(REGISTRY.get(), int(appid))
-        except Exception:
-            decky.logger.exception("[glass-shelf] get_unifideck_key failed")
-            return None
-
-    async def get_heroic_description(self, runner: str, app_name: str):
-        try:
-            return HEROIC.description(str(runner), str(app_name))
-        except Exception:
-            decky.logger.exception("[glass-shelf] get_heroic_description failed")
-            return None
 
     async def log_home_error(self, entry: str) -> None:
         # Home recovered from an error (src/home/RouteGuard): kept in the plugin's own log for a bug report.

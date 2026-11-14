@@ -120,7 +120,7 @@ export function accentHeroUrls(appId: number, stores: SteamStores): string[] {
  * (`appStore.GetCustomLogoImageURLs`), then the library asset in its hashed folder (`strLogoImage`, known once Steam
  * or its details callback has loaded the game), then, for a Steam game, Steam's image server (`apps/<id>/logo.png`,
  * probed: present for games whose local file name is not known yet; the unhashed local `<id>_logo.png` is not).
- * A shortcut (Unifideck, non-Steam) has only custom art. [] means no logo: the caller shows the title.
+ * A non-Steam shortcut has only custom art. [] means no logo: the caller shows the title.
  */
 export function logoUrls(appId: number, stores: SteamStores): string[] {
     const custom = listed(() => stores.customLogo?.(appId));

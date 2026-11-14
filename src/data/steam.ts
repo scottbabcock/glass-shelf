@@ -1,5 +1,4 @@
 import { fetchNoCors } from '@decky/api';
-import { HeroicRef, parseHeroicLaunch } from '../logic/heroic';
 import { htmlToText } from '../logic/text';
 import { attempt } from './attempt';
 import { Cache, cache as defaultCache, TTL } from './cache';
@@ -11,7 +10,6 @@ export interface GameInfo {
     isShortcut: boolean;
     playedMinutes: number;
     achievements: { achieved: number; total: number } | null;
-    heroic: HeroicRef | null; // set when Heroic Games Launcher added this shortcut
 }
 
 const SHORTCUT_APP_TYPE = 1073741824;
@@ -65,7 +63,6 @@ export function readGameInfo(overview: unknown, details: unknown): GameInfo {
             d?.nPlaytimeForever ?? (d as AnyRecord)?.m_iPlaytimeForever ?? (d as AnyRecord)?.minutes_playtime_forever
         ),
         achievements,
-        heroic: isShortcut ? parseHeroicLaunch(d?.strShortcutLaunchOptions as string | undefined) : null,
     };
     if (sortAs && sortAs.length > 0) {
         info.sortAs = sortAs;

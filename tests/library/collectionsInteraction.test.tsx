@@ -17,7 +17,6 @@ describe('Collections Interaction & Browsing Tests', () => {
             running: false,
             playedMinutes: 60,
             achievements: null,
-            heroic: null,
             source: 'Steam',
         },
         {
@@ -28,7 +27,6 @@ describe('Collections Interaction & Browsing Tests', () => {
             running: false,
             playedMinutes: 120,
             achievements: null,
-            heroic: null,
             source: 'Steam',
         },
     ];

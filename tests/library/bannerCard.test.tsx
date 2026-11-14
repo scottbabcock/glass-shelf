@@ -17,7 +17,6 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
         running: false,
         playedMinutes: 120,
         achievements: null,
-        heroic: null,
         source: 'Non-Steam',
     };
 
