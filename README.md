@@ -2,7 +2,7 @@
 
 A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode that replaces the Library with a glassy, two-panel **Spotlight Library**: a game grid on one side and a full-bleed artwork inspector on the other.
 
-> **Status: early development (0.x).** Glass Shelf is being stripped down to a lean MVP, then optimized, before plugin integrations are added back. Expect breaking changes.
+> **Status: early development (0.x).** The MVP is in place; next comes understanding and optimizing the core, then deliberate plugin integrations. Expect breaking changes.
 
 ## Credits
 
@@ -10,7 +10,7 @@ Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak1
 
 ## Roadmap
 
-1. **MVP**: remove HowLongToBeat, third-party plugin integrations (TabMaster, Unifideck, Heroic) and most settings.
+1. ~~**MVP**: remove HowLongToBeat, third-party plugin integrations (TabMaster, Unifideck, Heroic) and settings.~~ Done.
 2. **Optimize**: understand, simplify and speed up the core library view.
 3. **Integrations**: detect popular Decky plugins that conflict with or complement the Glass UI, and support them deliberately.
 
@@ -19,7 +19,12 @@ Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak1
 - **Spotlight Library**: replaces `/library`, `/library/games` and `/library/all` with a game grid plus an inspector panel (artwork, play time, achievements, install size, description).
 - **Accent glow** sampled from each game's hero art.
 - **Controller and touch**: D-pad/stick navigation, L1/R1 to switch tabs, View for the game menu, B to go back.
+- **Collections**: fanned covers with automatic console icons, plus **Customize Art** (Y) for a custom image or icon per collection.
 - **Safe fallback**: if the Spotlight Library fails to render, Steam's own Library is shown.
+
+### No settings
+
+Glass Shelf is opinionated: there is nothing to configure. The fixed choices live in `src/library/design.ts`. It only remembers what you choose inside the library: the sort order and any custom collection art. To turn it off, disable the plugin in Decky.
 
 ## Development
 
@@ -47,8 +52,8 @@ pnpm package          # build out/glass-shelf.zip for Decky
 |---|---|
 | `src/index.tsx` | Plugin entry: loads settings, patches the Library route, Quick Access settings panel |
 | `src/patches/libraryPage.tsx` | Hooks Steam's Library route and swaps in the Spotlight Library |
-| `src/library/` | The Spotlight Library UI, data building, sorting, artwork and CSS |
-| `src/data/` | Settings, caching, Steam data access, updater |
+| `src/library/` | The Spotlight Library UI, data building, sorting, artwork, CSS and fixed design constants |
+| `src/data/` | Remembered prefs, caching, Steam data access, updater |
 | `main.py`, `py_modules/glass_shelf/` | Python backend methods the frontend calls via `@decky/api` |
 | `playground/` | Vite browser playground with Decky mocks |
 | `tests/` | Vitest (TS) and pytest (`tests/py`) suites |
