@@ -1,78 +1,62 @@
-# Glance Library
+# Glass Shelf
 
-A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode. It enhances Steam's Library with **Spotlight Library**: a modern, cinematic two-panel library view with full-bleed hero artwork, dynamic accent glow, integrated inspector details, and TabMaster category synchronization.
+A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode that replaces the Library with a glassy, two-panel **Spotlight Library**: a game grid on one side and a full-bleed artwork inspector on the other.
 
-Glance Library works as a **standalone plugin** or side-by-side with [Game Glance](https://github.com/michpalm/game-glance) without route or patch conflicts.
+> **Status: early development (0.x).** Glass Shelf is being stripped down to a lean MVP, then optimized, before plugin integrations are added back. Expect breaking changes.
 
----
+## Credits
 
-## ✨ Features
+Glass Shelf is a fork of **Glance Library** by [shak18](https://github.com/shak18), which grew out of **[Game Glance](https://github.com/michpalm/game-glance)** by Michael Palma. Both are MIT licensed; see [LICENSE](LICENSE) and [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
-- **Spotlight Library 2-Panel View**: Replaces Steam's native Library route (`/library/games`, `/library/all`, `/library`) with an immersive split interface:
-  - **Left / Center**: Configurable game card grid or collection drawer with smooth scrolling.
-  - **Right**: Rich inspector panel showing high-res portrait/square/logo artwork, HowLongToBeat times, hours played, achievements progress bar, install size, and full game descriptions.
-- **Dynamic Accent Glow**: Extracts and samples vibrant accent colors directly from each game's hero art to illuminate card selections and ambient glows.
-- **TabMaster Integration**: Automatically syncs with TabMaster tabs and filters (Favorites, Installed, Non-Steam, Soundtracks, Collections) with real-time fallback to native categories.
-- **Visuals & Density Customization**:
-  - Configurable grid columns for games (2 to 5 columns).
-  - Configurable collection drawer density (3 to 6 columns).
-  - **Game Logos**: Toggle game logo art in the inspector preview.
-  - **Unhighlight Uninstalled Games**: Visually dim and desaturate uninstalled titles for rapid browsing.
-  - **Pulsing Background**: Subtle ambient breathing animation for hero background art.
-  - **Zoom Transitions**: Fluid scaling animation when opening and returning from games.
-- **Controller & Touch First**: Full gamepad navigation (D-pad/stick, bumper tab switching, View/Menu context actions) and responsive touchscreen / mouse support.
-- **Non-Steam Support**: Seamlessly displays non-Steam titles, Heroic launcher games, and custom shortcuts with artwork fallbacks.
+## Roadmap
 
----
+1. **MVP**: remove HowLongToBeat, third-party plugin integrations (TabMaster, Unifideck, Heroic) and most settings.
+2. **Optimize**: understand, simplify and speed up the core library view.
+3. **Integrations**: detect popular Decky plugins that conflict with or complement the Glass UI, and support them deliberately.
 
-## 🎮 Navigation & Controls
+## Features (current)
 
-| Action | Controller | Touch / Mouse |
-|---|---|---|
-| **Navigate Grid** | D-Pad / Left Stick | Drag / Scroll wheel |
-| **Open Game** | `A` Button | Tap game card |
-| **Game Context Menu** | `View` / `Select` Button | Right-click / Tap menu gear |
-| **Switch Categories** | `L1` / `R1` Bumpers | Tap category bar pill |
-| **Focus Inspector / Scroll Info** | Right Stick / Touch | Scroll inspector panel |
-| **Back to Collections / Exit** | `B` Button | Tap back arrow button |
+- **Spotlight Library**: replaces `/library`, `/library/games` and `/library/all` with a game grid plus an inspector panel (artwork, play time, achievements, install size, description).
+- **Accent glow** sampled from each game's hero art.
+- **Controller and touch**: D-pad/stick navigation, L1/R1 to switch tabs, View for the game menu, B to go back.
+- **Safe fallback**: if the Spotlight Library fails to render, Steam's own Library is shown.
 
----
+## Development
 
-## ⚙️ Settings (Quick Access Menu)
-
-Open the Decky Quick Access Menu (`...` button) and select **Glance Library**:
-
-- **Spotlight Library**: Toggle the custom 2-panel view on or off (instantly falling back to native Steam Library when disabled).
-- **Game Columns**: Adjust grid density from 2 to 5 columns.
-- **Collection Columns**: Adjust collection grid density from 3 to 6 columns.
-- **Sync with TabMaster**: Harmonize tabs with TabMaster configuration.
-- **Game Logos**: Toggle transparent logo art in the inspector preview.
-- **Unhighlight Uninstalled Games**: Mute accent and tone down uninstalled game cards.
-- **Pulsing Background**: Ambient breathing motion on hero artwork.
-- **Zoom Transition**: Smooth transition animations on launch.
-
----
-
-## 🛠️ Building & Development
-
-Prerequisites: Node.js 18+ and pnpm / npm.
+Prerequisites: Node.js 18+, [pnpm](https://pnpm.io) 9 (`npx pnpm@9` works if it isn't installed), Python 3 for backend tests and packaging.
 
 ```bash
-# Install dependencies
-npm install
-
-# Type-check TypeScript
-npm run typecheck
-
-# Run test suite
-npm test
-
-# Build production bundle
-npm run build
+pnpm install          # install dependencies
+pnpm typecheck        # TypeScript type-check
+pnpm test             # Vitest unit tests
+python -m pytest tests/py   # backend tests (needs pytest)
+pnpm build            # bundle to dist/
+pnpm dev              # browser playground with mocked Decky/Steam APIs
+pnpm package          # build out/glass-shelf.zip for Decky
 ```
 
----
+### Trying it on a Steam Deck
 
-## 🤝 Relationship to Game Glance
+1. On the Deck: Decky settings → **Developer mode** on.
+2. On your computer: `pnpm package`, then `scripts/serve.sh` to serve `out/` on your network.
+3. On the Deck: Decky → Developer → **Install plugin from URL** and enter the URL printed by `serve.sh`.
 
-Glance Library originated from the upstream [Game Glance](https://github.com/shak18/game-glance) project. While Game Glance focuses on the full-screen Game Details page and Spotlight Home, **Glance Library** is dedicated solely to crafting the ultimate Steam Library companion experience.
+### Project layout
+
+| Path | What lives there |
+|---|---|
+| `src/index.tsx` | Plugin entry: loads settings, patches the Library route, Quick Access settings panel |
+| `src/patches/libraryPage.tsx` | Hooks Steam's Library route and swaps in the Spotlight Library |
+| `src/library/` | The Spotlight Library UI, data building, sorting, artwork and CSS |
+| `src/data/` | Settings, caching, Steam data access, updater |
+| `main.py`, `py_modules/glass_shelf/` | Python backend methods the frontend calls via `@decky/api` |
+| `playground/` | Vite browser playground with Decky mocks |
+| `tests/` | Vitest (TS) and pytest (`tests/py`) suites |
+
+## Releasing
+
+The in-plugin updater checks this repo's GitHub releases. To publish version `X.Y.Z`:
+
+1. Bump `version` in `package.json` and `plugin.json`.
+2. `pnpm package`.
+3. Create a GitHub release tagged `vX.Y.Z` and attach `out/glass-shelf.zip` (the asset must keep that exact name).
