@@ -1,18 +1,13 @@
 import base64
-import datetime
 import os
 
 import decky
 
-
-from glass_shelf.home_errors import FILE_NAME, append_log, start_entry
 from glass_shelf.kv import KvStore
-from glass_shelf.migrate import carry_over, old_data_path
 
 DATA_PATH = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "data.json")
-if carry_over(old_data_path(decky.DECKY_PLUGIN_SETTINGS_DIR), DATA_PATH):
-    decky.logger.info("[glass-shelf] carried over data from Ally Game Page")
 KV = KvStore(DATA_PATH)
+
 _IMAGE_CACHE: dict = {}
 
 
@@ -36,13 +31,6 @@ class Plugin:
 
     async def kv_delete_prefix(self, prefix: str) -> int:
         return KV.delete_prefix(prefix)
-
-    async def log_home_error(self, entry: str) -> None:
-        # Home recovered from an error (src/home/RouteGuard): kept in the plugin's own log for a bug report.
-        try:
-            append_log(decky.DECKY_PLUGIN_LOG_DIR, f"v{decky.DECKY_PLUGIN_VERSION} {entry}"[:8000])
-        except Exception:
-            decky.logger.exception("[glass-shelf] log_home_error failed")
 
     async def get_version(self):
         # The installed version, from package.json at install time (Decky's environment); the updater compares it.
@@ -214,13 +202,6 @@ class Plugin:
 
     async def _main(self):
         decky.logger.info("[glass-shelf] backend started")
-        # Our own log records each start-up and where it is, so a report can show the location without an error.
-        try:
-            now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            path = os.path.join(decky.DECKY_PLUGIN_LOG_DIR, FILE_NAME)
-            append_log(decky.DECKY_PLUGIN_LOG_DIR, start_entry(decky.DECKY_PLUGIN_VERSION, now, path))
-        except Exception:
-            decky.logger.exception("[glass-shelf] start-up log entry failed")
 
     async def _unload(self):
         decky.logger.info("[glass-shelf] backend stopped")

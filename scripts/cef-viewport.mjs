@@ -1,4 +1,4 @@
-// Preview the game page at another screen size (e.g. a TV) by emulating the viewport, then restore it.
+// Preview Steam's Game Mode UI at another screen size (e.g. a TV) by emulating the viewport, then restore it.
 // Usage: node scripts/cef-viewport.mjs out-prefix WIDTHxHEIGHT@SCALE [...]   e.g. 1280x720@1.5 1920x1080@1
 import { writeFileSync } from 'node:fs';
 
@@ -30,7 +30,7 @@ try {
         const shot = await send('Page.captureScreenshot', { format: 'png' });
         const out = `${prefix}-${w}x${h}.png`;
         writeFileSync(out, Buffer.from(shot.result.data, 'base64'));
-        const m = await send('Runtime.evaluate', { returnByValue: true, expression: `(() => { const r = (s) => { const b = document.querySelector(s)?.getBoundingClientRect(); return b ? [b.x, b.y, b.width, b.height].map(Math.round) : null; }; return JSON.stringify({ vp: [innerWidth, innerHeight], play: r('._1fHBRg7vFnKszK6EiOdIEY'), hero: r('.gg-hero'), tabs: r('.gg-more') }); })()` });
+        const m = await send('Runtime.evaluate', { returnByValue: true, expression: `(() => { const r = (s) => { const b = document.querySelector(s)?.getBoundingClientRect(); return b ? [b.x, b.y, b.width, b.height].map(Math.round) : null; }; return JSON.stringify({ vp: [innerWidth, innerHeight], library: r('.sgl-root'), inspector: r('.sgl-inspector'), grid: r('.sgl-grid-panel') }); })()` });
         console.log(out, m.result.result.value);
     }
 } finally {
