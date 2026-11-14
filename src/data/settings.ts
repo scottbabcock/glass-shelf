@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from 'react';
 import { backendKv, KvBackend } from './kv';
-import { resetTabMasterCache } from '../library/tabmaster';
 import { LOG_PREFIX } from '../constants';
 
 export interface Settings {
@@ -10,7 +9,6 @@ export interface Settings {
     libraryCollectionColumns: number; // columns in Spotlight Library collections view (3-8, default 5)
     gameLogo: boolean; // show game logo in inspector header
     dimUninstalledGames: boolean; // dim and grayscale games in the library grid that are not installed
-    tabMasterSync: boolean; // sync tab order, visibility, and custom tabs from TabMaster when installed
     pulsingBackground: boolean; // gentle breathing ambient motion on background images
     zoomTransition: boolean; // animates the banner expanding into full screen when opening a game
     libraryStatusBar: boolean; // sleek status bar with clock, battery, connection & profile avatar
@@ -44,7 +42,6 @@ export const DEFAULTS: Settings = {
     libraryCollectionColumns: 5,
     gameLogo: false,
     dimUninstalledGames: false,
-    tabMasterSync: true,
     pulsingBackground: true,
     zoomTransition: true,
     libraryStatusBar: true,
@@ -72,7 +69,6 @@ export function parseSettings(raw: Partial<Settings> | null | undefined): Settin
                 : DEFAULTS.libraryCollectionColumns,
         gameLogo: pick('gameLogo'),
         dimUninstalledGames: pick('dimUninstalledGames'),
-        tabMasterSync: pick('tabMasterSync'),
         pulsingBackground: pick('pulsingBackground'),
         zoomTransition: pick('zoomTransition'),
         libraryStatusBar: pick('libraryStatusBar'),
@@ -244,12 +240,6 @@ export function createSettingsStore(kv: KvBackend, storage: StorageLike | null |
         },
         async setDimUninstalledGames(dimUninstalledGames: boolean): Promise<void> {
             await persist({ ...current, dimUninstalledGames });
-        },
-        async setTabMasterSync(tabMasterSync: boolean): Promise<void> {
-            try {
-                resetTabMasterCache();
-            } catch {}
-            await persist({ ...current, tabMasterSync });
         },
         async setPulsingBackground(pulsingBackground: boolean): Promise<void> {
             await persist({ ...current, pulsingBackground });

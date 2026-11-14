@@ -61,7 +61,6 @@ export function SettingsPanel() {
         libraryGridColumns,
         libraryCollectionColumns,
         dimUninstalledGames,
-        tabMasterSync,
         libraryStatusBar,
         statusAvatar,
         collectionConsoleIcons,
@@ -151,17 +150,6 @@ export function SettingsPanel() {
                                 ]}
                                 selectedOption={librarySort}
                                 onChange={(val: { data: unknown }) => settings.setLibrarySort(val.data as LibrarySortMode)}
-                            />
-                        </PanelSectionRow>
-                    </PanelSection>
-
-                    <PanelSection title="TabMaster Integration">
-                        <PanelSectionRow>
-                            <ToggleField
-                                label="Sync with TabMaster"
-                                description="Inherits custom tabs, tab ordering, and rule filters from the TabMaster plugin when installed."
-                                checked={tabMasterSync}
-                                onChange={(value) => settings.setTabMasterSync(value)}
                             />
                         </PanelSectionRow>
                     </PanelSection>

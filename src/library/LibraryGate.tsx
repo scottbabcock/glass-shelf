@@ -34,7 +34,7 @@ export function LibraryGate({ fallback }: { fallback: ReactElement }) {
 
     return (
         <LibraryGuard fallback={fallback}>
-            <SpotlightLibrary fallbackTree={fallback} />
+            <SpotlightLibrary />
         </LibraryGuard>
     );
 }

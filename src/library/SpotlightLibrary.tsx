@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
 import { cache } from '../data/cache';
@@ -22,12 +22,6 @@ import { LibraryStatusBar } from './LibraryStatusBar';
 import { buildCategories, LibraryCategory, LibraryCollectionItem, LibraryGameItem } from './libraryData';
 import { getNextSortMode, sortCollections, sortGames } from './librarySort';
 import { markLeavingLibrary, noteLibrary, resetLibraryMemory, takeLibraryRestore } from './libraryMemory';
-import {
-    extractTabsFromNativeTree,
-    fetchTabMasterSettings,
-    getCachedTabMasterSettings,
-    TabMasterSettingsResult,
-} from './tabmaster';
 
 interface BoxSize {
     width: number;
@@ -82,7 +76,6 @@ function useBoxSize(ref: RefObject<HTMLDivElement | null>): BoxSize | null {
 interface SpotlightLibraryProps {
     mockGames?: LibraryGameItem[];
     compact?: boolean;
-    fallbackTree?: ReactElement | null;
 }
 
 /** Launch source 100 is Steam's Big Picture library launch source */
@@ -178,55 +171,14 @@ export function openLibraryGameDetails(game: LibraryGameItem, _sourceEl?: HTMLEl
     }
 }
 
-export function SpotlightLibrary({ mockGames, compact, fallbackTree }: SpotlightLibraryProps) {
+export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) {
     const rootRef = useRef<HTMLDivElement | null>(null);
     const size = useBoxSize(rootRef);
     const canvas = libraryCanvas(size?.width ?? 0, size?.height ?? 0);
     const currentSettings = useSettings();
     const userSelectedTabRef = useRef(false);
 
-    const [tabMasterData, setTabMasterData] = useState<TabMasterSettingsResult | null>(() => {
-        if (fallbackTree) {
-            const liveTabs = extractTabsFromNativeTree(fallbackTree);
-            if (liveTabs && liveTabs.length > 0) {
-                return { found: true, tabs: liveTabs };
-            }
-        }
-        return getCachedTabMasterSettings();
-    });
-
-    useEffect(() => {
-        if (!currentSettings.tabMasterSync) {
-            setTabMasterData(null);
-            return;
-        }
-        let active = true;
-
-        if (fallbackTree) {
-            const liveTabs = extractTabsFromNativeTree(fallbackTree);
-            if (liveTabs && liveTabs.length > 0) {
-                console.log(`${LOG_PREFIX} TabMaster: sync from nativeTree (${liveTabs.length} tabs)`);
-                setTabMasterData({ found: true, tabs: liveTabs });
-                return;
-            }
-        }
-
-        fetchTabMasterSettings(true).then((data) => {
-            if (active && data) {
-                console.log(`${LOG_PREFIX} TabMaster: sync from disk (${data.tabs?.length ?? 0} tabs, found=${data.found})`);
-                setTabMasterData(data);
-            }
-        });
-        return () => {
-            active = false;
-        };
-    }, [currentSettings.tabMasterSync, fallbackTree]);
-
-    const effectiveTabMasterData = currentSettings.tabMasterSync ? tabMasterData : null;
-    const categories: LibraryCategory[] = useMemo(
-        () => buildCategories(mockGames, effectiveTabMasterData),
-        [mockGames, effectiveTabMasterData]
-    );
+    const categories: LibraryCategory[] = useMemo(() => buildCategories(mockGames), [mockGames]);
 
     // Memory restore on mount
     const restoreRef = useRef(takeLibraryRestore());
@@ -251,7 +203,7 @@ export function SpotlightLibrary({ mockGames, compact, fallbackTree }: Spotlight
     const [activeCategoryId, setActiveCategoryId] = useState<string>(initialCatId);
     const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(initialRestore?.subCollectionId ?? null);
 
-    // Synchronize activeCategoryId if categories change (e.g. TabMaster async load)
+    // Synchronize activeCategoryId if categories change
     useEffect(() => {
         if (categories.length === 0) return;
         const currentExists = categories.some((c) => c.id === activeCategoryId);
