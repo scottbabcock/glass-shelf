@@ -35,7 +35,7 @@ export interface CollectionCustomArtEntry {
 }
 
 export const SETTINGS_KEY = 'settings';
-export const LOCAL_STORAGE_KEY = 'glance_library_settings';
+export const LOCAL_STORAGE_KEY = 'glass_shelf_settings';
 
 export const DEFAULTS: Settings = {
     enabled: true,

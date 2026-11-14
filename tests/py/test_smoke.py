@@ -1,5 +1,5 @@
-import glancelibrary
+import glass_shelf
 
 
 def test_package_imports():
-    assert glancelibrary.__doc__.startswith("Glance Library")
+    assert glass_shelf.__doc__.startswith("Glass Shelf")

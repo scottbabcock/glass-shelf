@@ -1,7 +1,7 @@
 import json
 import os
 
-from glancelibrary.kv import KvStore
+from glass_shelf.kv import KvStore
 
 
 def test_set_get_roundtrip_persists(tmp_path):

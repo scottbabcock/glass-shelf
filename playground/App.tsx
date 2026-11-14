@@ -60,7 +60,7 @@ export function App() {
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ fontWeight: 800, fontSize: 16, color: '#58a6ff', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>Game Glance</span>
+                        <span>Glass Shelf</span>
                         <span style={{ fontSize: 11, background: '#21262d', color: '#8b949e', padding: '2px 8px', borderRadius: 12, border: '1px solid #30363d' }}>
                             v3.0.1 Preview
                         </span>

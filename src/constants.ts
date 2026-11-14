@@ -1,2 +1,2 @@
-export const PLUGIN_NAME = 'Glance Library';
-export const LOG_PREFIX = '[glance-library]';
+export const PLUGIN_NAME = 'Glass Shelf';
+export const LOG_PREFIX = '[glass-shelf]';
