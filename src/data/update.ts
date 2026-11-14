@@ -4,34 +4,31 @@ import { LOG_PREFIX, PLUGIN_NAME } from '../constants';
 import { cache, Cache, DAY_MS } from './cache';
 
 /**
- * Built-in updater for Glance Library:
- * Checks GitHub releases on shak18/glance-library (with fallback to shak18/game-glance),
- * looks for releases with glance-library assets,
- * and hands updates to Decky's native installer ('utilities/install_plugin').
+ * Built-in updater: checks GitHub releases on GITHUB_REPO for a release tagged vX.Y.Z (or glass-shelf-vX.Y.Z)
+ * that carries a glass-shelf.zip asset, and hands it to Decky's native installer ('utilities/install_plugin').
+ * A repo with no releases simply reports "up to date".
  */
-export const GITHUB_REPO = 'shak18/glance-library';
-export const LEGACY_GITHUB_REPO = 'shak18/game-glance';
+export const GITHUB_REPO = 'scottbabcock/glass-shelf';
 export const RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=10`;
-export const LEGACY_RELEASES_URL = `https://api.github.com/repos/${LEGACY_GITHUB_REPO}/releases?per_page=10`;
 
 /** The release asset Decky installs. */
-export const ASSET_NAME = 'glance-library.zip';
-/** Versioned naming patterns accepted (e.g. glance-library-v1.0.1.zip or glance-library-1.0.1.zip). */
-export const VERSIONED_ASSET = /^glance-library-v?\d+(\.\d+){1,3}\.zip$/i;
+export const ASSET_NAME = 'glass-shelf.zip';
+/** Versioned naming patterns accepted (e.g. glass-shelf-v1.0.1.zip or glass-shelf-1.0.1.zip). */
+export const VERSIONED_ASSET = /^glass-shelf-v?\d+(\.\d+){1,3}\.zip$/i;
 
 /** Decky's install type for an update of an installed plugin (1 reinstall, 2 update, 3 downgrade). */
 export const INSTALL_TYPE_UPDATE = 2;
 
 /**
  * Parses tags or version strings into numeric parts.
- * Supports prefixes like 'glance-library-v1.0.0', 'library-v1.0.0', 'v1.0.0', or '1.0.0'.
- * Returns null if not a valid semantic version.
+ * Accepts 'glass-shelf-v1.0.0', 'v1.0.0' or '1.0.0'; pre-release/build suffixes are ignored.
+ * Returns null if not a valid version.
  */
 export function parseVersion(text: unknown): number[] | null {
     if (typeof text !== 'string') return null;
     const cleaned = text
         .trim()
-        .replace(/^(glance[-_]?library|library)[-_]?/i, '')
+        .replace(/^glass[-_]?shelf[-_]?/i, '')
         .replace(/^v/i, '')
         .split(/[-+]/)[0];
     if (!/^\d+(\.\d+){0,3}$/.test(cleaned)) return null;
@@ -57,7 +54,7 @@ export function isNewer(latest: string, current: string): boolean {
 }
 
 export interface Release {
-    /** The clean semantic version string (e.g. "1.0.1") */
+    /** The clean version string (e.g. "1.0.1") */
     version: string;
     /** Download URL for the zip */
     url: string;
@@ -66,64 +63,9 @@ export interface Release {
 }
 
 /**
- * Accurately extracts the Glance Library version from a GitHub release item.
- * Supports:
- * - Release title containing "Glance Library v1.0.0"
- * - Tag name containing "glance-library-v1.0.0"
- * - Assets named "glance-library-v1.0.0.zip"
- * - Dedicated semver tags (e.g. "v1.0.0", "1.0.0")
- * Ignores legacy monolithic Game Glance tags (e.g. 2.x, 3.x) unless explicitly identified as Glance Library.
- */
-export function extractGlanceLibraryVersion(r: {
-    tag_name?: unknown;
-    name?: unknown;
-    body?: unknown;
-    assets?: unknown;
-}): string | null {
-    const tagName = typeof r.tag_name === 'string' ? r.tag_name.trim() : '';
-    const releaseName = typeof r.name === 'string' ? r.name.trim() : '';
-
-    // 1. Explicit "Glance Library vX.Y.Z" in release name
-    const nameMatch = releaseName.match(/glance[-_\s]?library[^0-9v]*v?(\d+(?:\.\d+)+)/i);
-    if (nameMatch) {
-        return nameMatch[1];
-    }
-
-    // 2. Explicit "glance-library-vX.Y.Z" in tag name
-    const tagMatch = tagName.match(/glance[-_\s]?library[^0-9v]*v?(\d+(?:\.\d+)+)/i);
-    if (tagMatch) {
-        return tagMatch[1];
-    }
-
-    // 3. Asset named "glance-library-vX.Y.Z.zip"
-    if (Array.isArray(r.assets)) {
-        for (const a of r.assets) {
-            const assetName = typeof a?.name === 'string' ? a.name : '';
-            const assetMatch = assetName.match(/^glance[-_]library[-_]v?(\d+(?:\.\d+)+)\.zip$/i);
-            if (assetMatch) {
-                return assetMatch[1];
-            }
-        }
-    }
-
-    // 4. Tag starting with "v1." or "1." (Glance Library standalone releases)
-    if (/^v?1\.\d+(\.\d+)?$/i.test(tagName)) {
-        return extractVersionString(tagName);
-    }
-
-    // 5. If tag is 2.x or 3.x (monolithic Game Glance releases), DO NOT use tag as Glance Library version
-    if (/^v?[23]\.\d+(\.\d+)?/i.test(tagName)) {
-        return null;
-    }
-
-    // 6. Generic version string fallback
-    return extractVersionString(tagName) || extractVersionString(releaseName);
-}
-
-/**
- * Extracts the newest installable Glance Library release from GitHub API output.
+ * Extracts the newest installable release from GitHub API output.
  * Handles both an array of releases (/releases) and a single release (/releases/latest).
- * Specifically requires the presence of glance-library.zip to avoid picking up unrelated fork releases.
+ * Requires a glass-shelf zip asset and a version in the tag (or, failing that, the release name).
  */
 export function pickRelease(json: unknown): Release | null {
     try {
@@ -138,7 +80,7 @@ export function pickRelease(json: unknown): Release | null {
             } | null;
             if (!r || r.draft === true || r.prerelease === true) continue;
 
-            const version = extractGlanceLibraryVersion(r);
+            const version = extractVersionString(r.tag_name) ?? extractVersionString(r.name);
             if (!version) continue;
 
             const assets = Array.isArray(r.assets)
@@ -212,27 +154,12 @@ export function latestReleases(fetchLatest: () => Promise<unknown>, store: Cache
 }
 
 async function fetchLatestRelease(): Promise<unknown> {
-    try {
-        const res = await fetchNoCors(RELEASES_URL, {
-            method: 'GET',
-            headers: { Accept: 'application/vnd.github+json' },
-        });
-        if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-                return data;
-            }
-        }
-    } catch {
-        // Fall back to legacy repository
-    }
-
-    const legacyRes = await fetchNoCors(LEGACY_RELEASES_URL, {
+    const res = await fetchNoCors(RELEASES_URL, {
         method: 'GET',
         headers: { Accept: 'application/vnd.github+json' },
     });
-    if (!legacyRes.ok) throw new Error(`GitHub answered ${legacyRes.status}`);
-    return legacyRes.json();
+    if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
+    return res.json();
 }
 
 const releases = latestReleases(fetchLatestRelease, cache);
@@ -272,7 +199,7 @@ const deckyBackend = (): DeckyBackendLike | undefined =>
     (globalThis as { DeckyBackend?: DeckyBackendLike }).DeckyBackend;
 
 /**
- * Hands the release to Decky's installer, which confirms with user, downloads, installs and reloads Glance Library.
+ * Hands the release to Decky's installer, which confirms with user, downloads, installs and reloads the plugin.
  */
 export async function installUpdate(
     release: Release,

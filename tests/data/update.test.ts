@@ -17,16 +17,16 @@ import {
 const SHA = 'a'.repeat(64);
 
 const createRelease = (over: Record<string, unknown> = {}) => ({
-    tag_name: 'glance-library-v1.1.0',
-    name: 'Glance Library v1.1.0',
+    tag_name: 'v1.1.0',
+    name: 'Glass Shelf v1.1.0',
     draft: false,
     prerelease: false,
     assets: [
         { name: 'other.zip', browser_download_url: 'https://github.com/x/other.zip' },
         {
-            name: 'glance-library.zip',
+            name: 'glass-shelf.zip',
             browser_download_url:
-                'https://github.com/shak18/game-glance/releases/download/glance-library-v1.1.0/glance-library.zip',
+                'https://github.com/scottbabcock/glass-shelf/releases/download/glass-shelf-v1.1.0/glass-shelf.zip',
             digest: `sha256:${SHA}`,
         },
     ],
@@ -34,10 +34,9 @@ const createRelease = (over: Record<string, unknown> = {}) => ({
 });
 
 describe('versions', () => {
-    it('parses standard tags with or without v, plus glance-library prefixes', () => {
-        expect(parseVersion('glance-library-v1.1.0')).toEqual([1, 1, 0]);
-        expect(parseVersion('glance-library-1.2.0')).toEqual([1, 2, 0]);
-        expect(parseVersion('library-v2.0.0')).toEqual([2, 0, 0]);
+    it('parses standard tags with or without v, plus glass-shelf prefixes', () => {
+        expect(parseVersion('glass-shelf-v1.1.0')).toEqual([1, 1, 0]);
+        expect(parseVersion('glass-shelf-1.2.0')).toEqual([1, 2, 0]);
         expect(parseVersion('v1.0.5')).toEqual([1, 0, 5]);
         expect(parseVersion('1.0.10')).toEqual([1, 0, 10]);
         expect(parseVersion('v1.0.0-beta.1')).toEqual([1, 0, 0]);
@@ -47,14 +46,14 @@ describe('versions', () => {
     });
 
     it('extracts clean version strings', () => {
-        expect(extractVersionString('glance-library-v1.1.0')).toBe('1.1.0');
+        expect(extractVersionString('glass-shelf-v1.1.0')).toBe('1.1.0');
         expect(extractVersionString('v1.0.5')).toBe('1.0.5');
         expect(extractVersionString('invalid')).toBeNull();
     });
 
     it('compares versions numerically', () => {
         expect(isNewer('1.0.10', '1.0.9')).toBe(true);
-        expect(isNewer('glance-library-v1.1.0', '1.0.0')).toBe(true);
+        expect(isNewer('glass-shelf-v1.1.0', '1.0.0')).toBe(true);
         expect(isNewer('1.0.0', '1.0.0')).toBe(false);
         expect(isNewer('0.9.0', '1.0.0')).toBe(false);
         expect(isNewer('invalid', '1.0.0')).toBe(false);
@@ -62,18 +61,18 @@ describe('versions', () => {
 });
 
 describe('pickRelease', () => {
-    it('picks release with glance-library.zip and parses version and sha256', () => {
+    it('picks release with glass-shelf.zip and parses version and sha256', () => {
         const picked = pickRelease(createRelease());
         expect(picked).toEqual({
             version: '1.1.0',
-            url: 'https://github.com/shak18/game-glance/releases/download/glance-library-v1.1.0/glance-library.zip',
+            url: 'https://github.com/scottbabcock/glass-shelf/releases/download/glass-shelf-v1.1.0/glass-shelf.zip',
             sha256: SHA,
         });
     });
 
-    it('handles release list and skips releases without glance-library.zip', () => {
+    it('handles release list and skips releases without glass-shelf.zip', () => {
         const releaseList = [
-            // Game Glance release without glance-library.zip
+            // unrelated release without a glass-shelf zip
             {
                 tag_name: 'v3.4.0',
                 name: 'Game Glance v3.4.0',
@@ -86,12 +85,12 @@ describe('pickRelease', () => {
                     },
                 ],
             },
-            // Glance Library release
+            // Glass Shelf release
             createRelease(),
         ];
         const picked = pickRelease(releaseList);
         expect(picked?.version).toBe('1.1.0');
-        expect(picked?.url).toContain('glance-library.zip');
+        expect(picked?.url).toContain('glass-shelf.zip');
     });
 
     it('ignores draft and prerelease entries', () => {
@@ -99,10 +98,10 @@ describe('pickRelease', () => {
         expect(pickRelease(createRelease({ prerelease: true }))).toBeNull();
     });
 
-    it('accepts versioned asset names like glance-library-v1.1.0.zip', () => {
+    it('accepts versioned asset names like glass-shelf-v1.1.0.zip', () => {
         const versioned = {
-            name: 'glance-library-v1.1.0.zip',
-            browser_download_url: 'https://github.com/x/glance-library-v1.1.0.zip',
+            name: 'glass-shelf-v1.1.0.zip',
+            browser_download_url: 'https://github.com/x/glass-shelf-v1.1.0.zip',
             digest: `sha256:${SHA}`,
         };
         const picked = pickRelease(createRelease({ assets: [versioned] }));
@@ -111,34 +110,16 @@ describe('pickRelease', () => {
 
     it('provides empty sha256 when digest is absent or invalid', () => {
         const asset = {
-            name: 'glance-library.zip',
-            browser_download_url: 'https://github.com/x/glance-library.zip',
+            name: 'glass-shelf.zip',
+            browser_download_url: 'https://github.com/x/glass-shelf.zip',
         };
         const picked = pickRelease(createRelease({ assets: [asset] }));
         expect(picked?.sha256).toBe('');
     });
 
-    it('correctly extracts Glance Library v1.0.0 from mixed release with tag 3.4.1', () => {
-        const mixedRelease = {
-            tag_name: '3.4.1',
-            name: 'Glance Library v1.0.0 & Game Glance Modded v3.4.0',
-            draft: false,
-            prerelease: false,
-            assets: [
-                {
-                    name: 'game-glance-modded-v3.4.1.zip',
-                    browser_download_url: 'https://github.com/shak18/game-glance/releases/download/3.4.1/game-glance-modded-v3.4.1.zip',
-                },
-                {
-                    name: 'glance-library.zip',
-                    browser_download_url: 'https://github.com/shak18/game-glance/releases/download/3.4.1/glance-library.zip',
-                },
-            ],
-        };
-        const picked = pickRelease(mixedRelease);
-        expect(picked).not.toBeNull();
-        expect(picked?.version).toBe('1.0.0');
-        expect(picked?.url).toBe('https://github.com/shak18/game-glance/releases/download/3.4.1/glance-library.zip');
+    it('falls back to the release name when the tag has no version', () => {
+        const picked = pickRelease(createRelease({ tag_name: 'latest', name: 'v0.2.0' }));
+        expect(picked?.version).toBe('0.2.0');
     });
 });
 
@@ -147,7 +128,7 @@ describe('checkForUpdate', () => {
         resetUpdateCheck();
     });
 
-    it('reports available when a newer Glance Library release exists', async () => {
+    it('reports available when a newer Glass Shelf release exists', async () => {
         const deps = {
             currentVersion: async () => '1.0.0',
             latestRelease: async () => createRelease(),
@@ -170,7 +151,7 @@ describe('checkForUpdate', () => {
         expect(res.current).toBe('1.1.0');
     });
 
-    it('reports upToDate when release list contains no glance-library releases', async () => {
+    it('reports upToDate when release list contains no glass-shelf releases', async () => {
         const deps = {
             currentVersion: async () => '1.0.0',
             latestRelease: async () => [
@@ -212,7 +193,7 @@ describe('installUpdate', () => {
         const call = vi.fn().mockResolvedValue(true);
         const rel = {
             version: '1.1.0',
-            url: 'https://github.com/shak18/game-glance/releases/download/v1.1.0/glance-library.zip',
+            url: 'https://github.com/scottbabcock/glass-shelf/releases/download/v1.1.0/glass-shelf.zip',
             sha256: SHA,
         };
         const success = await installUpdate(rel, { call });
@@ -220,7 +201,7 @@ describe('installUpdate', () => {
         expect(call).toHaveBeenCalledWith(
             'utilities/install_plugin',
             rel.url,
-            'Glance Library',
+            'Glass Shelf',
             rel.version,
             rel.sha256,
             2
