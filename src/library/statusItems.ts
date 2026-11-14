@@ -245,9 +245,9 @@ export function personaDot(self: SelfPersona | null): PersonaDot | null {
     return isAwayState(self.state) ? 'away' : 'online';
 }
 
-export function avatarView(self: SelfPersona | null, enabled: boolean): { url: string; ring: string } | null {
+export function avatarView(self: SelfPersona | null): { url: string; ring: string } | null {
     const dot = personaDot(self);
     const hash = self?.avatarHash;
-    if (!enabled || !dot || !hash || !/^[0-9a-f]{40}$/.test(hash) || /^0+$/.test(hash)) return null;
+    if (!dot || !hash || !/^[0-9a-f]{40}$/.test(hash) || /^0+$/.test(hash)) return null;
     return { url: `https://avatars.steamstatic.com/${hash}_medium.jpg`, ring: PERSONA_DOT_COLOURS[dot] };
 }

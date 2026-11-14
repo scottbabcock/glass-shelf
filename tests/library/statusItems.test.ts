@@ -150,17 +150,16 @@ describe('statusItems: persona and profile avatar', () => {
         const selfOnline = { state: 1, inGame: false, avatarHash: HASH };
         const selfAway = { state: 3, inGame: false, avatarHash: HASH };
 
-        expect(avatarView(selfOnline, true)).toEqual({
+        expect(avatarView(selfOnline)).toEqual({
             url: `https://avatars.steamstatic.com/${HASH}_medium.jpg`,
             ring: PERSONA_DOT_COLOURS.online,
         });
 
-        expect(avatarView(selfAway, true)).toEqual({
+        expect(avatarView(selfAway)).toEqual({
             url: `https://avatars.steamstatic.com/${HASH}_medium.jpg`,
             ring: PERSONA_DOT_COLOURS.away,
         });
 
-        expect(avatarView(selfOnline, false)).toBeNull();
         expect(avatarView({ state: 1, inGame: false, avatarHash: 'invalid' }, true)).toBeNull();
     });
 });

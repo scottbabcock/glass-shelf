@@ -13,7 +13,8 @@ import {
 import { LibraryCollectionItem, LibraryGameItem } from './libraryData';
 import { resolveCollectionArt, useImageUri } from './enhancedCollection';
 import { getBundledConsoleIcon } from './consoleIconData';
-import { useSettings } from '../data/settings';
+import { usePrefs } from '../data/prefs';
+import { GAME_COLUMNS, UNINSTALLED_ACCENT } from './design';
 
 interface LibraryGridProps {
     games: LibraryGameItem[];
@@ -21,7 +22,6 @@ interface LibraryGridProps {
     isCollectionsView?: boolean;
     selectedIndex: number;
     accent: string;
-    dimUninstalled?: boolean;
     columns?: number;
     onSelectGame: (index: number) => void;
     onLaunchGame?: (game: LibraryGameItem, sourceEl?: HTMLElement) => void;
@@ -36,7 +36,6 @@ export interface BannerCardProps {
     index?: number;
     isFocused: boolean;
     accent: string;
-    dimUninstalled?: boolean;
     onClick?: () => void;
     onSelectGame?: (index: number) => void;
     onDoubleClick?: (sourceEl?: HTMLElement) => void;
@@ -183,7 +182,6 @@ export const BannerCard = React.memo(
         index,
         isFocused,
         accent = '#1a9fff',
-        dimUninstalled,
         onClick,
         onSelectGame,
         onDoubleClick,
@@ -231,8 +229,8 @@ export const BannerCard = React.memo(
         }
     }, [isFocused]);
 
-    const isUninstalled = Boolean(dimUninstalled && !game.installed);
-    const cardAccent = isUninstalled ? '#707784' : accent;
+    const isUninstalled = !game.installed;
+    const cardAccent = isUninstalled ? UNINSTALLED_ACCENT : accent;
 
     return (
         <div
@@ -345,7 +343,6 @@ export const BannerCard = React.memo(
     if (prev.game.appId !== next.game.appId) return false;
     if (prev.game.installed !== next.game.installed) return false;
     if (prev.game.running !== next.game.running) return false;
-    if (prev.dimUninstalled !== next.dimUninstalled) return false;
     if (prev.onSelectGame !== next.onSelectGame) return false;
     if (prev.onClick !== next.onClick) return false;
     if (prev.onLaunchGame !== next.onLaunchGame) return false;
@@ -427,10 +424,10 @@ export function CollectionCard({
     isDragSuppressed,
 }: CollectionCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
-    const settings = useSettings();
+    const { collectionCustomArt } = usePrefs();
     const [imgFailed, setImgFailed] = React.useState(false);
 
-    const art = resolveCollectionArt(collection, settings);
+    const art = resolveCollectionArt(collection, collectionCustomArt);
     const cardAccent = accent;
 
     useEffect(() => {
@@ -602,8 +599,7 @@ export function LibraryGrid({
     isCollectionsView = false,
     selectedIndex,
     accent,
-    dimUninstalled,
-    columns = 3,
+    columns = GAME_COLUMNS,
     onSelectGame,
     onLaunchGame,
     onOpenCollection,
@@ -845,7 +841,6 @@ export function LibraryGrid({
                         index={idx}
                         isFocused={isGridFocused && idx === selectedIndex}
                         accent={accent}
-                        dimUninstalled={dimUninstalled}
                         onSelectGame={onSelectGame}
                         onLaunchGame={onLaunchGame}
                         onContextAction={onContextMenu}

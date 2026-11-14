@@ -1,7 +1,6 @@
 import { RoutePatch, routerHook } from '@decky/api';
 import { afterPatch } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { settings } from '../data/settings';
 import { LibraryGate } from '../library/LibraryGate';
 
 const LIBRARY_ROUTES = ['/library/games', '/library/all', '/library'];
@@ -18,7 +17,6 @@ function patchedLibraryMemo(memoType: any): any {
     if (cached) return cached;
     const copy = { ...memoType };
     afterPatch(copy, 'type', (_: unknown[], nativeTree: any) => {
-        if (!settings.get().enabled || !settings.get().spotlightLibrary) return nativeTree;
         return <LibraryGate key={KEY} fallback={nativeTree} />;
     });
     patchedLibraryMemos.set(memoType, copy);
@@ -75,7 +73,6 @@ const libraryRoutePatch: RoutePatch = (routeProps: any) => {
 
                                 if (typeof ret2.type === 'function') {
                                     afterPatch(ret2, 'type', (_3: unknown[], nativeTree: any) => {
-                                        if (!settings.get().enabled || !settings.get().spotlightLibrary) return nativeTree;
                                         return <LibraryGate key={KEY} fallback={nativeTree} />;
                                     });
                                     return ret2;
@@ -110,61 +107,22 @@ const libraryRoutePatch: RoutePatch = (routeProps: any) => {
 };
 
 export function patchLibraryPage(): () => void {
-    const handles = new Map<string, unknown>();
-    let active = false;
-    let stopped = false;
-    let unsubscribe: (() => void) | null = null;
-
-    const addPatches = () => {
-        if (active) return;
-        for (const route of LIBRARY_ROUTES) {
-            try {
-                const handle = routerHook.addPatch(route, libraryRoutePatch);
-                handles.set(route, handle);
-            } catch (error) {
-                console.warn(`${LOG_PREFIX} could not patch library route ${route}`, error);
-            }
+    const handles = new Map<string, RoutePatch>();
+    for (const route of LIBRARY_ROUTES) {
+        try {
+            handles.set(route, routerHook.addPatch(route, libraryRoutePatch));
+        } catch (error) {
+            console.warn(`${LOG_PREFIX} could not patch library route ${route}`, error);
         }
-        active = true;
-    };
-
-    const removePatches = () => {
-        if (!active) return;
-        for (const [route, handle] of handles.entries()) {
+    }
+    return () => {
+        for (const [route, handle] of handles) {
             try {
-                routerHook.removePatch(route, handle as RoutePatch);
+                routerHook.removePatch(route, handle);
             } catch (error) {
                 console.warn(`${LOG_PREFIX} could not remove patch for library route ${route}`, error);
             }
         }
         handles.clear();
-        active = false;
-    };
-
-    const sync = () => {
-        if (stopped) return;
-        const on = settings.get().enabled && settings.get().spotlightLibrary;
-        if (on && !active) {
-            addPatches();
-        } else if (!on && active) {
-            removePatches();
-        }
-    };
-
-    try {
-        unsubscribe = settings.subscribe(sync);
-        sync();
-    } catch (error) {
-        console.warn(`${LOG_PREFIX} Library route patch manager init failed`, error);
-    }
-
-    return () => {
-        stopped = true;
-        try {
-            unsubscribe?.();
-        } catch {
-            // ignore
-        }
-        removePatches();
     };
 }

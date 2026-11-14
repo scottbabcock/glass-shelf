@@ -17,7 +17,7 @@ import { peekSteamLanguage } from '../data/steam';
 import { LibraryCollectionItem, LibraryGameItem } from './libraryData';
 import { CONSOLE_LABELS, resolveCollectionArt, useImageUri } from './enhancedCollection';
 import { getBundledConsoleIcon } from './consoleIconData';
-import { useSettings } from '../data/settings';
+import { usePrefs } from '../data/prefs';
 
 interface LibraryInspectorProps {
     game: LibraryGameItem | null;
@@ -25,7 +25,6 @@ interface LibraryInspectorProps {
     isCollectionView?: boolean;
     accent: string;
     description: string | null;
-    preferLogos?: boolean;
     onPlay: () => void;
     onDetails: (sourceEl?: HTMLElement) => void;
     onOpenCollection?: () => void;
@@ -276,8 +275,8 @@ function CollectionInspectorView({
     onOpenCollection?: () => void;
     onCustomizeCollection?: () => void;
 }) {
-    const currentSettings = useSettings();
-    const art = resolveCollectionArt(collection, currentSettings);
+    const { collectionCustomArt } = usePrefs();
+    const art = resolveCollectionArt(collection, collectionCustomArt);
     const inspAccent = accent;
 
     const games = Array.isArray(collection?.games) ? collection.games : [];

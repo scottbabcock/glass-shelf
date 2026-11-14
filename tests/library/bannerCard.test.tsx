@@ -163,7 +163,7 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
         expect(html).toContain('https://example.com/banner.jpg');
     });
 
-    it('applies sgl-card-uninstalled class and neutral gray accent when dimUninstalled is true and game is uninstalled', () => {
+    it('applies sgl-card-uninstalled class and neutral gray accent when the game is uninstalled', () => {
         const uninstalledGame: LibraryGameItem = {
             ...baseGame,
             installed: false,
@@ -174,7 +174,6 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
                 game={uninstalledGame}
                 isFocused={false}
                 accent="#1a9fff"
-                dimUninstalled={true}
                 onClick={() => {}}
                 onDoubleClick={() => {}}
             />
@@ -184,7 +183,7 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
         expect(html).toContain('--accent:#707784');
     });
 
-    it('does not apply sgl-card-uninstalled when dimUninstalled is false or game is installed', () => {
+    it('does not apply sgl-card-uninstalled when the game is installed', () => {
         const installedGame: LibraryGameItem = {
             ...baseGame,
             installed: true,
@@ -195,26 +194,12 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
                 game={installedGame}
                 isFocused={false}
                 accent="#1a9fff"
-                dimUninstalled={true}
                 onClick={() => {}}
                 onDoubleClick={() => {}}
             />
         );
         expect(htmlInstalled).not.toContain('sgl-card-uninstalled');
         expect(htmlInstalled).toContain('--accent:#1a9fff');
-
-        const uninstalledWithoutSetting = renderToString(
-            <BannerCard
-                game={{ ...baseGame, installed: false }}
-                isFocused={false}
-                accent="#1a9fff"
-                dimUninstalled={false}
-                onClick={() => {}}
-                onDoubleClick={() => {}}
-            />
-        );
-        expect(uninstalledWithoutSetting).not.toContain('sgl-card-uninstalled');
-        expect(uninstalledWithoutSetting).toContain('--accent:#1a9fff');
     });
 
     describe('BannerCard index stability and React.memo equality', () => {
@@ -227,7 +212,6 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
                 index: 2,
                 isFocused: false,
                 accent: '#1a9fff',
-                dimUninstalled: true,
                 onSelectGame: vi.fn(),
             };
 
@@ -247,7 +231,6 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
                 index: 3,
                 isFocused: false,
                 accent: '#1a9fff',
-                dimUninstalled: true,
                 onSelectGame: fn1,
             };
 
@@ -280,7 +263,6 @@ describe('BannerCard Artwork Hierarchy & Memoization', () => {
                 index: 4,
                 isFocused: false,
                 accent: '#1a9fff',
-                dimUninstalled: true,
                 onSelectGame: onSelect,
             };
             const nextProps = {
