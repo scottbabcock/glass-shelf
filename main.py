@@ -10,7 +10,6 @@ from glass_shelf.home_errors import FILE_NAME, append_log, start_entry
 from glass_shelf.kv import KvStore
 from glass_shelf.migrate import carry_over, old_data_path
 from glass_shelf.store_lookup import RegistryCache, key_for_appid, store_for_appid
-from glass_shelf.tabmaster import get_tabmaster_data
 
 DATA_PATH = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "data.json")
 if carry_over(old_data_path(decky.DECKY_PLUGIN_SETTINGS_DIR), DATA_PATH):
@@ -67,18 +66,6 @@ class Plugin:
         except Exception:
             decky.logger.exception("[glass-shelf] get_heroic_description failed")
             return None
-
-    async def get_tabmaster_settings(self):
-        try:
-            res = get_tabmaster_data(decky.DECKY_PLUGIN_SETTINGS_DIR, decky.DECKY_USER_HOME)
-            decky.logger.info(
-                f"[glass-shelf] get_tabmaster_settings: found={res.get('found')}, "
-                f"path={res.get('path')}, tabs={len(res.get('tabs', []))}"
-            )
-            return res
-        except Exception:
-            decky.logger.exception("[glass-shelf] get_tabmaster_settings failed")
-            return {"found": False, "tabs": []}
 
     async def log_home_error(self, entry: str) -> None:
         # Home recovered from an error (src/home/RouteGuard): kept in the plugin's own log for a bug report.

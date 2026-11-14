@@ -18,7 +18,6 @@ describe('settings', () => {
             libraryCollectionColumns: 5,
             gameLogo: false,
             dimUninstalledGames: false,
-            tabMasterSync: true,
             pulsingBackground: true,
             zoomTransition: true,
             libraryStatusBar: true,
@@ -51,7 +50,6 @@ describe('settings', () => {
             libraryCollectionColumns: 5,
             gameLogo: false,
             dimUninstalledGames: false,
-            tabMasterSync: true,
             pulsingBackground: true,
             zoomTransition: true,
             libraryStatusBar: true,
@@ -112,17 +110,6 @@ describe('settings', () => {
         expect(reloaded.get().dimUninstalledGames).toBe(true);
     });
 
-    it('tabmaster sync is on by default and remembers being turned off', async () => {
-        const kv = memoryKv();
-        const store = createSettingsStore(kv);
-        await store.load();
-        expect(store.get().tabMasterSync).toBe(true);
-        await store.setTabMasterSync(false);
-        expect(store.get().tabMasterSync).toBe(false);
-        const reloaded = createSettingsStore(kv);
-        await reloaded.load();
-        expect(reloaded.get().tabMasterSync).toBe(false);
-    });
 
     it('pulsing background is on by default and remembers being turned off', async () => {
         const kv = memoryKv();
