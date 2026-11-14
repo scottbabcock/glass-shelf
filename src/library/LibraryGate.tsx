@@ -1,6 +1,5 @@
 import { Component, ReactElement, ReactNode } from 'react';
 import { LOG_PREFIX } from '../constants';
-import { useSettings } from '../data/settings';
 import { SpotlightLibrary } from './SpotlightLibrary';
 
 interface LibraryErrorBoundaryProps {
@@ -29,9 +28,6 @@ export class LibraryGuard extends Component<LibraryErrorBoundaryProps, LibraryEr
 }
 
 export function LibraryGate({ fallback }: { fallback: ReactElement }) {
-    const settings = useSettings();
-    if (!settings.enabled || !settings.spotlightLibrary) return fallback;
-
     return (
         <LibraryGuard fallback={fallback}>
             <SpotlightLibrary />

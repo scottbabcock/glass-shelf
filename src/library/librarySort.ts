@@ -1,5 +1,5 @@
 import { LibraryCollectionItem, LibraryGameItem } from './libraryData';
-import { LibrarySortMode } from '../data/settings';
+import { LibrarySortMode } from '../data/prefs';
 
 export const SORT_MODES: LibrarySortMode[] = ['recent', 'alpha', 'playtime', 'size'];
 

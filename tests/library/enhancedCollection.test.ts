@@ -5,7 +5,6 @@ import {
     resolveCollectionIcon,
     CONSOLE_ICONS,
 } from '../../src/library/enhancedCollection';
-import { DEFAULTS, Settings } from '../../src/data/settings';
 
 describe('enhancedCollection: matchConsoleFromCollectionName', () => {
     it('matches Sony PlayStation consoles', () => {
@@ -86,93 +85,63 @@ describe('enhancedCollection: resolveCollectionIcon', () => {
 });
 
 describe('enhancedCollection: resolveCollectionArt', () => {
-    const baseSettings: Settings = { ...DEFAULTS };
-
     it('defaults to fan mode with auto-detected icon', () => {
-        const art = resolveCollectionArt({ id: 'col1', name: 'GameCube', count: 10 }, baseSettings);
+        const art = resolveCollectionArt({ id: 'col1', name: 'GameCube', count: 10 }, {});
         expect(art.mode).toBe('fan');
         expect(art.fit).toBe('cover');
         expect(art.iconKey).toBe('gc');
         expect(art.iconUrl).toContain('gc.png');
     });
 
-    it('returns custom art mode when custom image URL is provided in settings', () => {
-        const customSettings: Settings = {
-            ...baseSettings,
-            collectionCustomArt: {
-                col1: {
-                    url: 'https://example.com/gc_banner.jpg',
-                    fit: 'contain',
-                },
-            },
-        };
-        const art = resolveCollectionArt({ id: 'col1', name: 'GameCube', count: 10 }, customSettings);
+    it('returns custom art mode when a custom image URL is saved for the collection', () => {
+        const art = resolveCollectionArt(
+            { id: 'col1', name: 'GameCube', count: 10 },
+            { col1: { url: 'https://example.com/gc_banner.jpg', fit: 'contain' } },
+        );
         expect(art.mode).toBe('custom');
         expect(art.customUrl).toBe('https://example.com/gc_banner.jpg');
         expect(art.fit).toBe('contain');
     });
 
-    it('respects global collection display mode when set to icon', () => {
-        const iconSettings: Settings = {
-            ...baseSettings,
-            collectionArtMode: 'icon',
-        };
-        const art = resolveCollectionArt({ id: 'col2', name: 'Super Nintendo', count: 5 }, iconSettings);
+    it('respects a per-collection icon mode', () => {
+        const art = resolveCollectionArt({ id: 'col2', name: 'Super Nintendo', count: 5 }, { col2: { mode: 'icon' } });
         expect(art.mode).toBe('icon');
         expect(art.iconKey).toBe('snes');
         expect(art.iconUrl).toContain('snes.png');
     });
 
     it('defaults empty collection with console icon to icon mode', () => {
-        const art = resolveCollectionArt({ id: 'col3', name: 'PlayStation 1', count: 0 }, baseSettings);
+        const art = resolveCollectionArt({ id: 'col3', name: 'PlayStation 1', count: 0 }, {});
         expect(art.mode).toBe('icon');
         expect(art.iconKey).toBe('ps1');
         expect(art.iconUrl).toContain('ps1.webp');
     });
 
-    it('respects global collectionArtFit for icons (contain, fill, center)', () => {
-        const containSettings: Settings = { ...baseSettings, collectionArtMode: 'icon', collectionArtFit: 'contain' };
-        expect(resolveCollectionArt({ id: 'c1', name: 'N64', count: 5 }, containSettings).fit).toBe('contain');
-
-        const fillSettings: Settings = { ...baseSettings, collectionArtMode: 'icon', collectionArtFit: 'fill' };
-        expect(resolveCollectionArt({ id: 'c2', name: 'NES', count: 5 }, fillSettings).fit).toBe('fill');
-
-        const centerSettings: Settings = { ...baseSettings, collectionArtMode: 'icon', collectionArtFit: 'center' };
-        expect(resolveCollectionArt({ id: 'c3', name: 'GameCube', count: 5 }, centerSettings).fit).toBe('center');
-    });
-
-    it('resolves Sega 32X, Dreamcast, and Mega Drive collections with center fit', () => {
-        const customSettings: Settings = {
-            ...baseSettings,
-            collectionCustomArt: {
-                col32x: { mode: 'icon', fit: 'center', hasCustomFit: true },
-            },
-        };
-        const art32x = resolveCollectionArt({ id: 'col32x', name: 'Sega 32X', count: 4 }, customSettings);
+    it('resolves Sega 32X, Dreamcast, and Mega Drive collections, honouring an explicit fit', () => {
+        const art32x = resolveCollectionArt(
+            { id: 'col32x', name: 'Sega 32X', count: 4 },
+            { col32x: { mode: 'icon', fit: 'center', hasCustomFit: true } },
+        );
         expect(art32x.mode).toBe('icon');
         expect(art32x.fit).toBe('center');
         expect(art32x.iconKey).toBe('32x');
         expect(art32x.iconUrl).toContain('32x.png');
 
-        const artDc = resolveCollectionArt({ id: 'coldc', name: 'Dreamcast', count: 12 }, baseSettings);
+        const artDc = resolveCollectionArt({ id: 'coldc', name: 'Dreamcast', count: 12 }, {});
         expect(artDc.iconKey).toBe('dc');
         expect(artDc.iconUrl).toContain('dc.png');
 
-        const artMd = resolveCollectionArt({ id: 'colmd', name: 'Mega Drive', count: 8 }, baseSettings);
+        const artMd = resolveCollectionArt({ id: 'colmd', name: 'Mega Drive', count: 8 }, {});
         expect(artMd.iconKey).toBe('md');
         expect(artMd.iconUrl).toContain('md.png');
     });
 
-    it('uses settings.collectionArtFit for existing entries without hasCustomFit: true', () => {
-        const staleSettings: Settings = {
-            ...baseSettings,
-            collectionArtFit: 'contain',
-            collectionCustomArt: {
-                'N64': { mode: 'icon', fit: 'cover' }, // stale entry without hasCustomFit
-            },
-        };
-        const art = resolveCollectionArt({ id: 'n64-id', name: 'N64', count: 10 }, staleSettings);
-        expect(art.fit).toBe('contain');
+    it('uses the default fit for saved entries without hasCustomFit', () => {
+        const art = resolveCollectionArt(
+            { id: 'n64-id', name: 'N64', count: 10 },
+            { N64: { mode: 'icon', fit: 'contain' } }, // stale entry without hasCustomFit
+        );
+        expect(art.fit).toBe('cover');
     });
 });
 

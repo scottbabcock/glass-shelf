@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, us
 import { Focusable, GamepadButton, GamepadEvent, Navigation } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
 import { cache } from '../data/cache';
-import { settings, useSettings } from '../data/settings';
+import { prefs, usePrefs } from '../data/prefs';
 import { getDescription, peekSteamLanguage } from '../data/steam';
 import { openGameActions } from './gameActions';
 import { accentFor, DEFAULT_ACCENT, legibleAccent } from './accent';
@@ -19,6 +19,7 @@ import { CollectionArtModal } from './CollectionArtModal';
 import { preloadPresetIcons } from './enhancedCollection';
 import { LIBRARY_CSS } from './libraryCss';
 import { LibraryStatusBar } from './LibraryStatusBar';
+import { COLLECTION_COLUMNS, GAME_COLUMNS, UNINSTALLED_ACCENT } from './design';
 import { buildCategories, LibraryCategory, LibraryCollectionItem, LibraryGameItem } from './libraryData';
 import { getNextSortMode, sortCollections, sortGames } from './librarySort';
 import { markLeavingLibrary, noteLibrary, resetLibraryMemory, takeLibraryRestore } from './libraryMemory';
@@ -175,7 +176,7 @@ export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) 
     const rootRef = useRef<HTMLDivElement | null>(null);
     const size = useBoxSize(rootRef);
     const canvas = libraryCanvas(size?.width ?? 0, size?.height ?? 0);
-    const currentSettings = useSettings();
+    const { librarySort: sortMode } = usePrefs();
     const userSelectedTabRef = useRef(false);
 
     const categories: LibraryCategory[] = useMemo(() => buildCategories(mockGames), [mockGames]);
@@ -226,20 +227,16 @@ export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) 
     const isInsideSubCollection = isCollectionsTab && Boolean(selectedCollectionId);
     const isCollectionsView = isCollectionsTab && !isInsideSubCollection;
 
-    const gameColumns = Math.min(7, Math.max(3, currentSettings.libraryGridColumns ?? 3));
-    const collectionColumns = Math.min(8, Math.max(3, currentSettings.libraryCollectionColumns ?? 5));
-    const columns = isCollectionsView ? collectionColumns : gameColumns;
+    const columns = isCollectionsView ? COLLECTION_COLUMNS : GAME_COLUMNS;
 
     const activeSubCollection: LibraryCollectionItem | null = useMemo(() => {
         if (!isInsideSubCollection || !selectedCollectionId) return null;
         return activeCategory?.collections?.find((c) => String(c.id) === String(selectedCollectionId) || c.name === selectedCollectionId) ?? null;
     }, [isInsideSubCollection, activeCategory, selectedCollectionId]);
 
-    const sortMode = currentSettings.librarySort ?? 'recent';
-
     const handleCycleSort = useCallback(() => {
         const nextSort = getNextSortMode(sortMode);
-        void settings.setLibrarySort(nextSort);
+        void prefs.setLibrarySort(nextSort);
         playNavSound('ChangeTabs');
         setSelectedGameIdx(0);
     }, [sortMode]);
@@ -987,7 +984,7 @@ export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) 
     return (
         <Focusable
             ref={rootRef as unknown as React.Ref<HTMLDivElement>}
-            className={`sgl-root${compact ? ' sgl-compact' : ''}${back ? ' sgl-back' : ''}${isLeaving ? ' sgl-leaving' : ''}${currentSettings.libraryStatusBar ? ' sgl-has-status-bar' : ''}`}
+            className={`sgl-root${compact ? ' sgl-compact' : ''}${back ? ' sgl-back' : ''}${isLeaving ? ' sgl-leaving' : ''} sgl-has-status-bar`}
             data-sgl-leaving={isLeaving ? 'true' : undefined}
             preferredFocus={!customizingCollection}
             noFocusRing
@@ -1048,9 +1045,8 @@ export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) 
                     game={selectedGame}
                     collection={selectedCollectionItem}
                     isCollectionView={isCollectionsTab && !isInsideSubCollection}
-                    accent={Boolean(currentSettings.dimUninstalledGames && selectedGame && !selectedGame.installed) ? '#707784' : gameAccent}
+                    accent={selectedGame && !selectedGame.installed ? UNINSTALLED_ACCENT : gameAccent}
                     description={gameDesc}
-                    preferLogos={currentSettings.gameLogo}
                     onPlay={() => handlePlayGame()}
                     onDetails={(sourceEl) => handleDetails(selectedGame, sourceEl)}
                     onOpenCollection={handleOpenCollection}
@@ -1064,7 +1060,6 @@ export function SpotlightLibrary({ mockGames, compact }: SpotlightLibraryProps) 
                     isCollectionsView={isCollectionsTab && !isInsideSubCollection}
                     selectedIndex={selectedGameIdx}
                     accent={gameAccent}
-                    dimUninstalled={Boolean(currentSettings.dimUninstalledGames)}
                     columns={columns}
                     isGridFocused={focusZone === 'grid' && !customizingCollection}
                     onSelectGame={handleSelectGame}

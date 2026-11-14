@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { callable, openFilePicker, FileSelectionType } from '@decky/api';
-import { CollectionArtFit, CollectionArtMode, Settings } from '../data/settings';
+import { CollectionArtFit, CollectionArtMode, Prefs } from '../data/prefs';
+import { COLLECTION_ART_FIT, COLLECTION_ART_MODE } from './design';
 import { registerArtworkCacheClearer } from './artwork';
 
 const getImageDataCall = callable<[path: string], string | null>('get_image_data');
@@ -348,17 +349,17 @@ export async function checkLocalCollectionArt(name: string, id: string): Promise
  */
 export function resolveCollectionArt(
     collection: { name?: string; id?: string | number; count?: number },
-    settings: Settings
+    customArt: Prefs['collectionCustomArt']
 ): CollectionArtResult {
     const colId = collection?.id !== undefined ? String(collection.id) : '';
     const colName = typeof collection?.name === 'string' ? collection.name : String(collection?.name ?? '');
 
     const customConfig =
-        (colId ? settings.collectionCustomArt?.[colId] : undefined) ??
-        (colName ? settings.collectionCustomArt?.[colName] : undefined);
+        (colId ? customArt?.[colId] : undefined) ??
+        (colName ? customArt?.[colName] : undefined);
 
     // Check custom or auto-detected icon
-    const consoleKey = customConfig?.icon ?? (settings.collectionConsoleIcons ? matchConsoleFromCollectionName(colName) : null);
+    const consoleKey = customConfig?.icon ?? matchConsoleFromCollectionName(colName);
     const iconUrl = consoleKey && CONSOLE_ICONS[consoleKey] ? getBundledIconUrl(CONSOLE_ICONS[consoleKey]) : undefined;
 
     // Check custom image URL
@@ -369,16 +370,16 @@ export function resolveCollectionArt(
         ? customConfig.mode
         : customConfig?.url
             ? 'custom'
-            : (settings.collectionArtMode === 'icon' || (collection.count === 0 && iconUrl))
+            : collection.count === 0 && iconUrl
                 ? 'icon'
                 : customUrl
                     ? 'custom'
-                    : (settings.collectionArtMode ?? 'fan');
+                    : COLLECTION_ART_MODE;
 
     // Sizing (fit) logic:
     // If customConfig explicitly has hasCustomFit: true (or an explicit fit for custom images), respect customConfig.fit.
-    // For console icons without an explicit custom fit, dynamically follow global settings.collectionArtFit!
-    const defaultFitForMode: CollectionArtFit = settings.collectionArtFit ?? (resolvedMode === 'icon' ? 'center' : 'cover');
+    // Otherwise the fixed default fit applies, console icons included.
+    const defaultFitForMode: CollectionArtFit = COLLECTION_ART_FIT;
     const hasExplicitFit = Boolean(customConfig?.hasCustomFit || (resolvedMode === 'custom' && customConfig?.fit));
     const fit: CollectionArtFit = hasExplicitFit && customConfig?.fit ? customConfig.fit : defaultFitForMode;
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaGamepad } from 'react-icons/fa';
 import { LibraryCategory, LibraryCollectionItem } from './libraryData';
-import { LibrarySortMode } from '../data/settings';
+import { LibrarySortMode } from '../data/prefs';
 import { SORT_ICONS, SORT_LABELS } from './librarySort';
 
 export interface LibraryCategoryBarProps {

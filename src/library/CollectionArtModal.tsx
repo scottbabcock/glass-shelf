@@ -12,7 +12,8 @@ import {
     useImageUri,
 } from './enhancedCollection';
 import { getBundledConsoleIcon } from './consoleIconData';
-import { CollectionArtFit, CollectionArtMode, settings, useSettings } from '../data/settings';
+import { CollectionArtFit, CollectionArtMode, prefs, usePrefs } from '../data/prefs';
+import { COLLECTION_ART_FIT, COLLECTION_ART_MODE } from './design';
 import { playNavSound } from './navSound';
 
 interface CollectionArtModalProps {
@@ -66,11 +67,10 @@ export function CollectionArtModal({
     registerGamepadHandler,
     registerKeyDownHandler,
 }: CollectionArtModalProps) {
-    const currentSettings = useSettings();
-    const existingCustom =
-        currentSettings.collectionCustomArt?.[collection.id] ?? currentSettings.collectionCustomArt?.[collection.name];
+    const { collectionCustomArt } = usePrefs();
+    const existingCustom = collectionCustomArt?.[collection.id] ?? collectionCustomArt?.[collection.name];
 
-    const currentArt = resolveCollectionArt(collection, currentSettings);
+    const currentArt = resolveCollectionArt(collection, collectionCustomArt);
 
     const [mode, setMode] = useState<CollectionArtMode>(existingCustom?.mode ?? currentArt.mode);
     const [customUrl, setCustomUrl] = useState<string>(existingCustom?.url ?? currentArt.customUrl ?? '');
@@ -80,7 +80,7 @@ export function CollectionArtModal({
     const [fit, setFit] = useState<CollectionArtFit>(
         existingCustom?.hasCustomFit && existingCustom.fit
             ? existingCustom.fit
-            : (currentSettings.collectionArtFit ?? (currentArt.mode === 'icon' ? 'center' : 'cover'))
+            : COLLECTION_ART_FIT
     );
     const [selectedIcon, setSelectedIcon] = useState<string>(existingCustom?.icon ?? currentArt.iconKey ?? '');
     const [isBrowsing, setIsBrowsing] = useState(false);
@@ -103,9 +103,7 @@ export function CollectionArtModal({
         }
     }, [consoleKeys, currentArt.iconKey, selectedIcon]);
 
-    const effectiveFit: CollectionArtFit = customFitChosen
-        ? fit
-        : (currentSettings.collectionArtFit ?? (mode === 'icon' ? 'center' : 'cover'));
+    const effectiveFit: CollectionArtFit = customFitChosen ? fit : COLLECTION_ART_FIT;
 
     const handleSelectMode = useCallback((newMode: CollectionArtMode) => {
         setMode(newMode);
@@ -170,7 +168,7 @@ export function CollectionArtModal({
             if (collection.name && collection.name !== collection.id) {
                 keysToSave.push(collection.name);
             }
-            settings.setCollectionCustomArt(keysToSave, entry).catch((e) => {
+            prefs.setCollectionCustomArt(keysToSave, entry).catch((e) => {
                 console.error('[glass-shelf] Failed to save custom artwork:', e);
             });
         } catch (e) {
@@ -186,17 +184,17 @@ export function CollectionArtModal({
             if (collection.name && collection.name !== collection.id) {
                 keysToRemove.push(collection.name);
             }
-            settings.removeCollectionCustomArt(keysToRemove).catch(() => {});
+            prefs.removeCollectionCustomArt(keysToRemove).catch(() => {});
         } catch {}
-        setMode(currentSettings.collectionArtMode ?? 'fan');
-        setModeIndex(currentSettings.collectionArtMode === 'custom' ? 1 : currentSettings.collectionArtMode === 'icon' ? 2 : 0);
+        setMode(COLLECTION_ART_MODE);
+        setModeIndex(0);
         setCustomUrl('');
         setCustomFitChosen(false);
-        setFit(currentSettings.collectionArtFit ?? 'cover');
+        setFit(COLLECTION_ART_FIT);
         setSelectedIcon('');
         onSaveSuccess?.();
         onClose();
-    }, [collection.id, collection.name, currentSettings.collectionArtFit, currentSettings.collectionArtMode, onClose, onSaveSuccess]);
+    }, [collection.id, collection.name, onClose, onSaveSuccess]);
 
     // Controller & Keyboard Navigation State Handlers
     const handleNavUp = useCallback(() => {

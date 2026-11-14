@@ -18,7 +18,6 @@ import { COVER_CSS, useHideSteamBar } from './useHideSteamBar';
 import { startStatus, statusState, subscribeStatus } from './statusStore';
 import { findTopBar, focusInTopBar } from './topBar';
 import { menuOpen, steamMenuStore } from './steamMenu';
-import { useSettings } from '../data/settings';
 import { libraryCanvas } from './libraryScale';
 
 const STATUS_Z = 5000;
@@ -304,7 +303,6 @@ export const STATUS_BAR_CSS = `
 `;
 
 export function LibraryStatusBar({ hidden = false }: { hidden?: boolean }) {
-    const { libraryStatusBar, statusAvatar } = useSettings();
     const [doc, setDoc] = useState<Document | null>(null);
 
     const marker = useCallback((el: HTMLSpanElement | null) => {
@@ -319,7 +317,7 @@ export function LibraryStatusBar({ hidden = false }: { hidden?: boolean }) {
     const clock = useClock();
     const self = useSelfPersona();
     const dot = personaDot(self);
-    const avatar = avatarView(self, statusAvatar);
+    const avatar = avatarView(self);
 
     const win = doc?.defaultView ?? null;
     const { width, height } = useViewport(win);
@@ -329,9 +327,7 @@ export function LibraryStatusBar({ hidden = false }: { hidden?: boolean }) {
     const menuShown = useMenuOpen(doc);
     const away = focusInBar || menuShown;
 
-    useHideSteamBar(doc, away || !libraryStatusBar);
-
-    if (!libraryStatusBar) return <span ref={marker} style={{ display: 'none' }} />;
+    useHideSteamBar(doc, away);
 
     const place = statusPlacement(canvas.scale);
     const conn = connection ? CONNECTION[connection] : null;

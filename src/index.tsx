@@ -1,15 +1,15 @@
 import { definePlugin } from '@decky/api';
 import { staticClasses } from '@decky/ui';
 import { FaBook } from 'react-icons/fa';
-import { SettingsPanel } from './components/SettingsPanel';
+import { QuickAccessPanel } from './components/QuickAccessPanel';
 import { LOG_PREFIX, PLUGIN_NAME } from './constants';
-import { settings } from './data/settings';
+import { prefs } from './data/prefs';
 import { getSteamLanguage } from './data/steam';
 import { startUpdateChecks } from './data/update';
 import { patchLibraryPage } from './patches/libraryPage';
 
 export default definePlugin(() => {
-    settings.load().catch((error) => console.error(`${LOG_PREFIX} failed to load settings`, error));
+    prefs.load().catch((error) => console.error(`${LOG_PREFIX} failed to load prefs`, error));
     void getSteamLanguage(); // resolve early so library renders in the right locale immediately
     const unpatchLibrary = patchLibraryPage();
     const stopUpdateChecks = startUpdateChecks();
@@ -18,7 +18,7 @@ export default definePlugin(() => {
     return {
         name: PLUGIN_NAME,
         titleView: <div className={staticClasses.Title}>{PLUGIN_NAME}</div>,
-        content: <SettingsPanel />,
+        content: <QuickAccessPanel />,
         icon: <FaBook />,
         onDismount() {
             try {
